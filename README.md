@@ -15,7 +15,8 @@ Offline version of analysis scripts of [GutMeta](https://gutmeta.deepomics.org/)
 
 * Version: 1.0.0
 * Authors:
-  * Yiqi Jiang <yiqijiang3@cityu.edu.hk>
+  * Yiqi Jiang
+  * Lijia Che
 * Maintainers:
   * Yiqi Jiang <yiqijiang3@cityu.edu.hk>
 
