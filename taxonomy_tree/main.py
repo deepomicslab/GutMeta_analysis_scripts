@@ -10,8 +10,9 @@ import os
     --dsf    <str> input file from subplatform
     --ann    <str> input file of group info
     --groupid  <str> column name used for grouping, default: phenotype
-    --method <str> method for visualization [PCA/PCoA]
-    --maxk <int> maxinum number of clusters to find the optimal k. default:10
+    --method <str> method for testing [wilcox.test/t.test/kruskal.test/aov]
+    --adjust <int> method for adjusting p-values, default: fdr. [fdr/BH/hochberg/holm/bonferroni/hommel]
+    
 '''
 
 script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'diff.R')
