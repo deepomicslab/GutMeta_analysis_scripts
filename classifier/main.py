@@ -15,6 +15,10 @@ import os
     --pvalue_cutoff <str> threshold of adjusted p-value as significant, defualt: 0.05
     --occ_cutoff <str> threshold of occurence to filter taxonomy, the taxonomy should at least exist in the threshold ratio of samples of certain group, defualt: 0.1
     --mean_cutoff <str> threshold of mean value to filter taxonomy, at least one group should have a mean relative abundance greater than this threshold, defualt: 0
+    --tax_level <str> taxonomy level to find biomarker, default: species. [species/genus]
+    --scale <boolean> scale abundance with log or not, defualt: True [True/False]
+    --cv_n <int> CV fold. default = 10 [2-10]
+    --rep_n <int> replicates number for cross-validation. default = 5 [2-10]
 '''
 
 script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'diff.R')
