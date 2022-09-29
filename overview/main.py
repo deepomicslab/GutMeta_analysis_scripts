@@ -14,7 +14,7 @@ ifile1 = ''
 ifile2 = ''
 
 tax_level = 'genus'
-ops, args = getopt.getopt(sys.argv[1:], '', ['abdf=', 'dsf=', 'ann=', 'method=', 'groupid=',"mean_cutoff=","tax_level="])
+ops, args = getopt.getopt(sys.argv[1:], '', ['abdf=', 'dsf=', 'ann=', 'method=', 'groupid=',"tax_level="])
 for op, arg in ops:
     if op == '--abdf':
         ifile1 = arg
