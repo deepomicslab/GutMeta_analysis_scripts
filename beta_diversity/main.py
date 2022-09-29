@@ -10,7 +10,7 @@ import os
     --dsf    <str> input file from subplatform
     --ann    <str> input file of group info
     --groupid  <str> column name used for grouping, default: phenotype
-    --method <str> method for alpha diversity, default: shannon. [shannon/simpson/invsimpson/ACE/Chao1/observedSpecies]
+    --method <str> method for beta diversity calculation [bray/euclidean/jaccard/manhattan/weighted_unifrac/unweighted_unifrac]
     --reads  <int> number of reads used to calculate richness, need with methods: ACE/Chao1/observedSpecies, default: 500000
     --testing <str> method for testing, default: t.test. [wilcox.test/t.test/kruskal.test/aov]
 '''
