@@ -13,8 +13,8 @@ import os
     --method <str> method for testing [wilcox.test/t.test/kruskal.test/aov]
     --adjust <str> method for adjusting p-values, default: fdr. [fdr/BH/hochberg/holm/bonferroni/hommel]
     --mean_cutoff <float> threshold of mean value to filter taxonomy, at least one group should have a mean relative abundance greater than this threshold, defualt: 0
-    --pvalue_cutoff <float> threshold of occurence to filter taxonomy, the taxonomy should at least exist in the threshold ratio of samples of certain group, defualt: 0.1
-
+    --occ_cutoff <float> threshold of occurence to filter taxonomy, the taxonomy should at least exist in the threshold ratio of samples of certain group, defualt: 0.1
+    --pvalue_cutoff <float> threshold of adjusted p-value as significant, defualt: 0.05
 '''
 
 script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'diff.R')
