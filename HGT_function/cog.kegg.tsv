@@ -1,0 +1,24 @@
+,category,category_detail,p_value,fold,gene_num,profile,locus_type,p.adj
+0,A,A: RNA processing and modification,1.0,,0,Information storage and Processing,cog,1.0
+1,B,B: Chromatin structure and dynamics,1.0,,0,Information storage and Processing,cog,1.0
+2,C,C: Energy production and conversion,1.0,,0,Metabolism,cog,1.0
+3,D,"D: Cell cycle control, cell division, chromosome partitioning",1.0,,0,Cellular processes and signaling,cog,1.0
+4,E,E: Amino acid transport and metabolism,1.0,,0,Metabolism,cog,1.0
+5,F,F: Nucleotide transport and metabolism,1.0,,0,Metabolism,cog,1.0
+6,G,G: Carbohydrate transport and metabolism,1.0,,0,Metabolism,cog,1.0
+7,H,H: Coenzyme transport and metabolism,1.0,,0,Metabolism,cog,1.0
+8,I,I: Lipid transport and metabolism,1.0,,0,Metabolism,cog,1.0
+9,J,"J: Translation, ribosomal structure and biogenesis",1.0,,0,Information storage and Processing,cog,1.0
+10,K,K: Transcription,1.0,,0,Information storage and Processing,cog,1.0
+11,L,"L: Replication, recombination and repair",1.0,,0,Information storage and Processing,cog,1.0
+12,M,M: Cell wall/membrane/envelope biogenesis,1.0,,0,Cellular processes and signaling,cog,1.0
+13,N,N: Cell motility,1.0,,0,Cellular processes and signaling,cog,1.0
+14,O,"O: Posttranslational modification, protein turnover, chaperones",1.0,,0,Cellular processes and signaling,cog,1.0
+15,P,P: Inorganic ion transport and metabolism,1.0,,0,Metabolism,cog,1.0
+16,Q,"Q: Secondary metabolites biosynthesis, transport and catabolism",1.0,,0,Metabolism,cog,1.0
+17,S,S: Function unknown,1.0,,0,Function unknown,cog,1.0
+18,T,T: Signal transduction mechanisms,1.0,,0,Cellular processes and signaling,cog,1.0
+19,U,"U: Intracellular trafficking, secretion, and vesicular transport",1.0,,0,Cellular processes and signaling,cog,1.0
+20,V,V: Defense mechanisms,1.0,,0,Cellular processes and signaling,cog,1.0
+21,W,W: Extracellular structures,1.0,,0,Cellular processes and signaling,cog,1.0
+22,Z,Z: Cytoskeleton,1.0,,0,Cellular processes and signaling,cog,1.0

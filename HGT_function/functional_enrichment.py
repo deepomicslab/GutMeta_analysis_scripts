@@ -145,35 +145,35 @@ def get_gene_lengths(identified_hgt):
     print ("Finish reading events, num is", len(HGT_event_list))
     return HGT_event_list
 
+
 class Annotation():
 
     def __init__(self, gff):
         self.gff = gff
-        self.kos = []
-        self.cogs = []
-        self.product = []
-        self.read_gff()
+        self.near = 100
+        self.min_gene_frac = 0.5
+        self.gene_annotation = {}
+        self.gene_classification = {}
+        self.pattern_dict = {}
+        self.init_pattern_dict()
 
     def read_gff(self):
 
         f = open(self.gff)
         for line in f:
             array = line.split("\t")
+            if len(array) < 9:
+                continue
             genome = array[0]
             g_type = array[2]
             detail = array[8].strip()
-            anno_dict = self.understand_gene(detail)
-            ## example {'ID': 'GUT_GENOME000001_00001', 'eC_number': '2.7.8.-', 'Name': 'clsA_1', 'db_xref': 'COG:COG1502', 'gene': 'clsA_1', 'inference': 'ab initio prediction:Prodigal:2.6,similar to AA sequence:UniProtKB:P71040', 'locus_tag': 'GUT_GENOME000001_00001', 'product': 'Major cardiolipin synthase ClsA', 'Pfam': 'PF13396,PF13091', 'KEGG': 'ko:K06131', 'eggNOG': '1476973.JMMB01000007_gene3171', 'COG': 'I', 'InterPro': 'IPR030874,IPR022924,IPR025202,IPR001736,IPR027379'}
-            # print (anno_dict)
-            if "COG" in anno_dict:
-                cog = anno_dict["COG"]
-                for i in range(len(cog)):
-                    self.cogs.append(cog[i])
-
-            if "KEGG" in anno_dict:
-                KEGG_list = anno_dict["KEGG"].split(",")
-                self.kos += KEGG_list
-            # break
+            start = int(array[3])
+            end = int(array[4])
+            if genome not in self.gene_annotation:
+                self.gene_annotation[genome] = {}
+                self.gene_annotation[genome]["intervals"] = []
+            self.gene_annotation[genome]["intervals"].append([start, end])
+            self.gene_annotation[genome][str(start)+ "_"+str(end)] = self.understand_gene(detail)
         f.close() 
 
     def given_seg(self, genome, gene_interval):
@@ -441,6 +441,12 @@ class Extract_KO():
                 if re.search("IS[0-9]", gene_anno_dict["product"]):  # IS element
                     continue
                 KEGG_list = gene_anno_dict["KEGG"].split(",")
+                new_KEGG_list = []
+                for element in KEGG_list:
+                    if element[:3] == "ko:":
+                        element = element[3:]
+                        new_KEGG_list.append(element)
+                KEGG_list = new_KEGG_list
 
                 #### check if the gene locates in insert site
                 locate_insert_flag = False
@@ -996,6 +1002,7 @@ if __name__ == "__main__":
 
     annotation = Annotation(gff) # load gene annotation
     annotation.read_gff()
+    print ("annotation is done.")
 
     ## only consider bkp
     extract = Extract_KO({})
