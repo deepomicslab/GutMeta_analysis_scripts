@@ -261,9 +261,9 @@ class Micro_homo():
         if bkp.to_strand == "-":
             to_seq = self.get_reverse_complement_seq(to_seq)
         if re.search(">", from_seq) or re.search(">", to_seq):
-            return -1
+            return -1, -1
         if countN(from_seq) > 0 or countN(to_seq) > 0:
-            return -1
+            return -1, -1
         # test = ["GUT_GENOME018982_31", "GUT_GENOME239728_21"]
         # if bkp.from_ref in test and bkp.to_ref in test:
         #     print (bkp.from_ref, bkp.to_ref, from_seq, to_seq, self.find_mh(from_seq, to_seq))
@@ -380,7 +380,7 @@ class Micro_homo():
         # if max_homology_len > 0:
         #     print ("fr", alignment[0])
         #     print ("to", alignment[1])
-        return max_homology_len
+        return max_homology_len, alignment
 
 def cal_ave_homo_len(homo_freq):
     sample_num = sum(list(homo_freq.values()))
@@ -485,7 +485,7 @@ if __name__ == "__main__":
     optional = parser.add_argument_group("optional arguments")
     required.add_argument("--bkp", type=str, help="<str> concerned HGT breakpoints", metavar="\b")
     required.add_argument("--database", type=str, help="<str> UHGG database file", metavar="\b")
-    # required.add_argument("--bin_size", type=int,default=100, help="bin_size", metavar="\b")
+    required.add_argument("--min_len", type=int,default=2, help="minimum microhomology length", metavar="\b")
     # required.add_argument("--uhgg_meta", type=str, default = "genomes-all_metadata.tsv", help="<str> UHGG taxonomy metadata", metavar="\b")
     required.add_argument("--output", type=str, default= "./micro.csv", help="<str> output", metavar="\b")
     # required.add_argument("--cog_output", type=str, default= "./cog_enrich.csv",help="<str> COG output", metavar="\b")
@@ -505,9 +505,22 @@ if __name__ == "__main__":
     # abun_cutoff = args["abun_cutoff"]
     # bin_size = args["bin_size"]
 
+    data = []
     mic = Micro_homo()
     for bkp in all_bkps:
-        mic.for_each_bkp(bkp)
+        
+        max_homology_len, alignment = mic.for_each_bkp(bkp)
+        if max_homology_len == -1:
+            continue
+        if max_homology_len < args["min_len"]:
+            continue
+        # print (bkp.from_ref)
+        print (max_homology_len, alignment[0],  alignment[1])
+
+        data.append([bkp.from_ref, bkp.from_bkp, bkp.to_ref, bkp.to_bkp, max_homology_len, alignment[0],  alignment[1]])
+    
+    df = pd.DataFrame(data, columns = ["from_ref", "from_bkp", "to_ref", "to_bkp", "homology_len", "alignment_1", "alignment_2"])
+    df.to_csv(args["output"], sep='\t')  
 
 
     # compare the microhomology length between HGT breakpoint pairs and random two HGT breakpoints 
