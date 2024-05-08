@@ -218,7 +218,7 @@ class Marker():
         reject, pvals_corrected, _, alphacBonf = multipletests(list(df["p_value"]), alpha=0.05, method='bonferroni')
         df["p.adj"] = pvals_corrected
         df.to_csv(output, sep='\t')
-        
+
         # filtered_df = df[df['p.adj'] < 0.05]
         # filtered_df.to_csv(output, sep='\t')
         # for index, row in filtered_df.iterrows():
@@ -333,7 +333,7 @@ class Marker():
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description="Get accurate hgt breakpoints", add_help=False, \
+    parser = argparse.ArgumentParser(description="Identify HGT biomarkers between two groups", add_help=False, \
     usage="%(prog)s -h", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     required = parser.add_argument_group("required arguments")
     optional = parser.add_argument_group("optional arguments")
