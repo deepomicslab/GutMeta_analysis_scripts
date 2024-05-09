@@ -146,7 +146,7 @@ class Micro_homo():
         self.ref = database
         self.workdir = workdir
         self.ref_fasta = Fasta(self.ref)        
-        self.cutoff = 10
+        self.cutoff = args["seq_len"]
         self.min_score = 8
         self.all_bkp = {}
         self.all_bkp_sample_num = {}
@@ -261,9 +261,9 @@ class Micro_homo():
         if bkp.to_strand == "-":
             to_seq = self.get_reverse_complement_seq(to_seq)
         if re.search(">", from_seq) or re.search(">", to_seq):
-            return -1, -1
+            return -1, -1, '', ''
         if countN(from_seq) > 0 or countN(to_seq) > 0:
-            return -1, -1
+            return -1, -1, '', ''
         # test = ["GUT_GENOME018982_31", "GUT_GENOME239728_21"]
         # if bkp.from_ref in test and bkp.to_ref in test:
         #     print (bkp.from_ref, bkp.to_ref, from_seq, to_seq, self.find_mh(from_seq, to_seq))
@@ -380,7 +380,7 @@ class Micro_homo():
         # if max_homology_len > 0:
         #     print ("fr", alignment[0])
         #     print ("to", alignment[1])
-        return max_homology_len, alignment
+        return max_homology_len, alignment, from_seq, to_seq
 
 def cal_ave_homo_len(homo_freq):
     sample_num = sum(list(homo_freq.values()))
@@ -490,7 +490,7 @@ if __name__ == "__main__":
     required.add_argument("--output", type=str, default= "./micro.csv", help="<str> output", metavar="\b")
     # required.add_argument("--cog_output", type=str, default= "./cog_enrich.csv",help="<str> COG output", metavar="\b")
     # required.add_argument("--surround", type=int, default=5000, help="<str> focus on genes with distance within this value", metavar="\b")
-    # optional.add_argument("--abun_cutoff", type=float, default=1e-7, help="bkp abun cutoff", metavar="\b")
+    optional.add_argument("--seq_len", type=int, default=20, help="upstream and downstream length from the BKP pos", metavar="\b")
     # optional.add_argument("--min_gene_frac", type=float, default=0.5, help="minimum gene fraction", metavar="\b")
 
     optional.add_argument("-h", "--help", action="help")
@@ -509,7 +509,7 @@ if __name__ == "__main__":
     mic = Micro_homo()
     for bkp in all_bkps:
         
-        max_homology_len, alignment = mic.for_each_bkp(bkp)
+        max_homology_len, alignment, from_seq, to_seq = mic.for_each_bkp(bkp)
         if max_homology_len == -1:
             continue
         if max_homology_len < args["min_len"]:
@@ -517,9 +517,11 @@ if __name__ == "__main__":
         # print (bkp.from_ref)
         print (max_homology_len, alignment[0],  alignment[1])
 
-        data.append([bkp.from_ref, bkp.from_bkp, bkp.to_ref, bkp.to_bkp, max_homology_len, alignment[0],  alignment[1]])
+        data.append([bkp.from_ref, bkp.from_bkp, bkp.from_strand, bkp.from_bkp-args["seq_len"], bkp.from_bkp+args["seq_len"],from_seq, \
+            bkp.to_ref, bkp.to_bkp, bkp.to_strand, bkp.to_bkp-args["seq_len"], bkp.to_bkp+args["seq_len"],to_seq, max_homology_len, alignment[0],  alignment[1]])
     
-    df = pd.DataFrame(data, columns = ["from_ref", "from_bkp", "to_ref", "to_bkp", "homology_len", "alignment_1", "alignment_2"])
+    df = pd.DataFrame(data, columns = ["from_ref", "from_bkp", "from_strand", "from_start", "from_end", "from_seq",  \
+    "to_ref", "to_bkp", "to_strand", "to_start", "to_end", "to_seq", "homology_len", "from_alignment", "to_alignment"])
     df.to_csv(args["output"], sep='\t')  
 
 
