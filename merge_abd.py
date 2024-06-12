@@ -79,5 +79,5 @@ for op, arg in ops:
         opath = arg
 
 merged_abd = merge_abd(idir, slist)
-merge_abd = rename_x(merged_abd)
+merged_abd = rename_x(merged_abd)
 merged_abd.to_csv(opath, sep='\t')
