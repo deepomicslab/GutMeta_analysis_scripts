@@ -95,10 +95,10 @@ pvalue_reformat = pd.DataFrame(index=list(fullname_dict.values()), columns=['gro
 for taxa_level in pvalue.index:
     pvalue_reformat.loc[fullname_dict[taxa_level], 'group1'] = g1
     pvalue_reformat.loc[fullname_dict[taxa_level], 'group2'] = g2
-    pvalue_reformat.loc[fullname_dict[taxa_level], 'g1_mean'] = reformat_diversity[(reformat_diversity['group'] == g1)^(reformat_diversity['taxonomy_level'] == fullname_dict[taxa_level])]['alpha_diversity'].mean()
-    pvalue_reformat.loc[fullname_dict[taxa_level], 'g1_variance'] = reformat_diversity[(reformat_diversity['group'] == g1)^(reformat_diversity['taxonomy_level'] == fullname_dict[taxa_level])]['alpha_diversity'].var()
-    pvalue_reformat.loc[fullname_dict[taxa_level], 'g2_mean'] = reformat_diversity[(reformat_diversity['group'] == g2)^(reformat_diversity['taxonomy_level'] == fullname_dict[taxa_level])]['alpha_diversity'].mean()
-    pvalue_reformat.loc[fullname_dict[taxa_level], 'g2_variance'] = reformat_diversity[(reformat_diversity['group'] == g2)^(reformat_diversity['taxonomy_level'] == fullname_dict[taxa_level])]['alpha_diversity'].var()
+    pvalue_reformat.loc[fullname_dict[taxa_level], 'g1_mean'] = reformat_diversity[(reformat_diversity['group'] == g1)&(reformat_diversity['taxonomy_level'] == fullname_dict[taxa_level])]['alpha_diversity'].mean()
+    pvalue_reformat.loc[fullname_dict[taxa_level], 'g1_variance'] = reformat_diversity[(reformat_diversity['group'] == g1)&(reformat_diversity['taxonomy_level'] == fullname_dict[taxa_level])]['alpha_diversity'].var()
+    pvalue_reformat.loc[fullname_dict[taxa_level], 'g2_mean'] = reformat_diversity[(reformat_diversity['group'] == g2)&(reformat_diversity['taxonomy_level'] == fullname_dict[taxa_level])]['alpha_diversity'].mean()
+    pvalue_reformat.loc[fullname_dict[taxa_level], 'g2_variance'] = reformat_diversity[(reformat_diversity['group'] == g2)&(reformat_diversity['taxonomy_level'] == fullname_dict[taxa_level])]['alpha_diversity'].var()
     pvalue_reformat.loc[fullname_dict[taxa_level], 'g1/g2'] = pvalue_reformat.loc[fullname_dict[taxa_level], 'g1_mean'] / pvalue_reformat.loc[fullname_dict[taxa_level], 'g2_mean']
     pvalue_reformat.loc[fullname_dict[taxa_level], 'pvalue'] = pvalue.loc[taxa_level, 'pvalue']
     if (pvalue_reformat.loc[fullname_dict[taxa_level], 'g1_mean'] > pvalue_reformat.loc[fullname_dict[taxa_level], 'g2_mean']):

@@ -75,3 +75,63 @@ for i in range(len(tax_list)):
     if result.returncode > 0:
         print (result.stderr)
         exit(1)
+
+phenos = pd.read_csv('merged_input.group_info.tsv', sep='\t', index_col=0, header=0)
+pheno_set = list(set(phenos[groupid]))
+g1 = pheno_set[0]
+g2 = pheno_set[1]
+taxonomy_fullname = 'kingdom/phylum/class/order/family/genus/species'
+fullname_dict = {}
+for t in taxonomy_fullname.split('/'):
+    fullname_dict[t[0]] = t
+
+matrix_df_new = pd.DataFrame(columns=['sample_pair', 'group', 'taxonomy_level', 'beta_diversity'])
+for t in fullname_dict.keys():
+    taxonomy_fullname = fullname_dict[t]
+    infile = 'output.{}.beta_diversity.{}.matrix.tsv'.format(method, t)
+    matrix_df = pd.read_csv(infile, sep='\t', index_col=0, header=0)
+    nsample = matrix_df.shape[0]
+    samples = matrix_df.index
+    matrix_df = matrix_df.loc[samples, samples]
+    sample1_list = []
+    sample2_list = []
+    values = []
+    for i in range(nsample):
+        sample1_list += [samples[i]] * (nsample - i - 1)
+        sample2_list += list(samples[i+1:])
+        values += list(matrix_df.iloc[i, i+1:])
+    pheno_list1 = [phenos.loc[s, groupid] for s in sample1_list]
+    pheno_list2 = [phenos.loc[s, groupid] for s in sample2_list]
+    ppair_list = ['{}:{}'.format(pheno_list1[i], pheno_list2[i]) for i in range(len(pheno_list1))]
+    spair_list = ['{}:{}'.format(sample1_list[i], sample2_list[i]) for i in range(len(sample1_list))]
+    matrix_df_new_t = pd.DataFrame({'sample_pair': spair_list, 'group': ppair_list, 'taxonomy_level': taxonomy_fullname, 'beta_diversity': values})
+    matrix_df_new = pd.concat([matrix_df_new, matrix_df_new_t])
+matrix_df_new.to_csv('output.beta_diversity.results.tsv ', sep='\t', index=False)
+
+p_df_new = pd.DataFrame(columns=['taxonomy_level', 'group1', 'group2', 'g1_n', 'g2_n', 'g1_occ', 'g2_occ', 'g1_mean', 'g1_variance', 'g2_variance', 'g2_mean', 'g1/g2', 'enrich', 'pvalue'])
+nsample = phenos.shape[0]
+nsample = (nsample - 1) * nsample / 2
+for t in fullname_dict.keys():
+    taxonomy_fullname = fullname_dict[t]
+    infile = 'output.{}.pvalue.{}.tsv'.format(method, t)
+    p_df = pd.read_csv(infile, sep='\t', index_col=0, header=0)
+    for ppair in p_df.index:
+        g1 = ppair.split(':')[0].replace('-', ':')
+        g2 = ppair.split(':')[1].replace('-', ':')
+        samples1 = matrix_df_new[(matrix_df_new['group'] == g1)&(matrix_df_new['taxonomy_level'] == taxonomy_fullname)]['beta_diversity']
+        samples2 = matrix_df_new[(matrix_df_new['group'] == g2)&(matrix_df_new['taxonomy_level'] == taxonomy_fullname)]['beta_diversity']
+        g1_mean = samples1.mean()
+        g2_mean = samples2.mean()
+        g1_variance = samples1.var()
+        g2_variance = samples2.var()
+        g1_g2 = g1_mean / g2_mean
+        if g1_g2 > 1:
+            enrich = g1
+        else:
+            enrich = g2
+        pvalue = p_df.loc[ppair, 'p-value']
+        idx = p_df_new.shape[0]
+        p_df_new.loc[idx, ] = [taxonomy_fullname, g1, g2, len(samples1), len(samples2), len(samples1)/nsample, len(samples2)/nsample, g1_mean, g1_variance, g2_variance, g2_mean, g1_g2, enrich, pvalue]
+p_df_new.to_csv('output.beta_diversity.pvalue.tsv', sep='\t', index=False)
+            
+

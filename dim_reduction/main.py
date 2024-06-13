@@ -49,6 +49,10 @@ merged_df.to_csv('merged_input.abundance.all.tsv', sep='\t')
 split_tax = tax_split(merged_df)
 tax_list = [i for i in split_tax.keys()]
 
+taxonomy_fullname = 'kingdom/phylum/class/order/family/genus/species'
+fullname_dict = {}
+for t in taxonomy_fullname.split('/'):
+    fullname_dict[t[0]] = t
 
 for i in range(len(tax_list)):
     tax = tax_list[i]
@@ -60,7 +64,8 @@ for i in range(len(tax_list)):
 
 
     if i != 0 and (method == 'tSNE' or len(split_tax[tax].index) > int(axis_n)):
-        output = 'output.' + method + '.reduce_dim.' + tax + '.tsv'
+        output = '，output.dimension_reduction.{}.{}.tsv '.format(method,fullname_dict[tax])
+        #output = 'output.' + method + '.reduce_dim.' + tax + '.tsv'
         result = subprocess.run(['Rscript',script_path,'-i',tax_abd,'-o',output,'-t',tax,'-m',method,'-r',axis_n,'-d',dist_method],stdout=subprocess.PIPE)
         if result.returncode > 0:
             print (result.stderr)
