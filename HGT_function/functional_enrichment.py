@@ -145,6 +145,48 @@ def get_gene_lengths(identified_hgt):
     print ("Finish reading events, num is", len(HGT_event_list))
     return HGT_event_list
 
+class Transfer_times():
+
+    def __init__(self):
+        self.HGT_event_dict = {}
+        self.max_diff = 50
+
+    def read_events(self, identified_hgt):
+        i = 0
+        for line in open(identified_hgt):
+            array = line.strip().split(",")
+            array = ["x"] + array
+            if array[1] == "sample":
+                continue
+            event = Event(array)
+            sample = array[1]
+            # if phenotype_dict[sample][0] == "Time-series":
+            #     continue
+            # print (phenotype_dict[sample][0])
+            i += 1
+
+            if sample not in self.HGT_event_dict:
+                self.HGT_event_dict[sample] = []
+            self.HGT_event_dict[sample].append(event) 
+        print ("sample num ", len(self.HGT_event_dict), "kept HGTs num is", i)
+
+    def read_events_bk(self, identified_hgt):
+        i = 0
+        for line in open(identified_hgt):
+            array = line.strip().split(",")
+            if array[1] == "sample":
+                continue
+            event = Event(array)
+            sample = array[1]
+            # if phenotype_dict[sample][0] == "Time-series":
+            #     continue
+            # print (phenotype_dict[sample][0])
+            i += 1
+
+            if sample not in self.HGT_event_dict:
+                self.HGT_event_dict[sample] = []
+            self.HGT_event_dict[sample].append(event) 
+        print ("sample num ", len(self.HGT_event_dict), "kept HGTs num is", i)
 
 class Annotation():
 
@@ -313,7 +355,7 @@ def merge_intervals(intervals):
 
 class Extract_KO():
 
-    def __init__(self, HGT_event_dict):
+    def __init__(self, HGT_event_dict, surround=0):
         self.HGT_event_dict = HGT_event_dict
         self.min_gene_frac = min_gene_frac
         self.transfer_regions = {}
@@ -324,16 +366,12 @@ class Extract_KO():
         self.no_transfer_kos = []
         self.insert_kos = []
         self.no_insert_kos = []
-        self.near = 0
+        self.near = surround
     
     def classify_regions(self):
         for sample in self.HGT_event_dict:
             for event in self.HGT_event_dict[sample]:
 
-                event.check_IS(self.min_gene_frac, annotation)
-                if remove_transposon_flag:
-                    if event.Transposon_flag:
-                        continue
 
                 if event.del_genome not in self.transfer_regions:
                     self.transfer_regions[event.del_genome] = []
@@ -359,6 +397,12 @@ class Extract_KO():
                 if "KEGG" not in gene_anno_dict:
                     continue
                 KEGG_list = gene_anno_dict["KEGG"].split(",")
+                new_KEGG_list = []
+                for element in KEGG_list:
+                    if element[:3] == "ko:":
+                        element = element[3:]
+                        new_KEGG_list.append(element)
+                KEGG_list = new_KEGG_list
                 #### check if the gene locates in transfer region
                 locate_transfer_flag = check_overlap([gene_interval[0], gene_interval[1]], transfer_intervals, self.min_gene_frac)
                 if locate_transfer_flag:
@@ -367,9 +411,8 @@ class Extract_KO():
                     self.no_transfer_kos += KEGG_list
                 # print (KEGG_list, locate_transfer_flag)
             # break
-        print (len(self.transfer_kos), len(self.no_transfer_kos))
-        print_data(self.transfer_kos, transfer_ko_file)
-        print_data(self.no_transfer_kos, no_transfer_ko_file)
+        # print (len(self.transfer_kos), len(self.no_transfer_kos))
+        return self.transfer_kos, self.no_transfer_kos
 
     def collect_all_ko(self):
         all_ko = []
@@ -396,6 +439,13 @@ class Extract_KO():
                     continue
                 KEGG_list = gene_anno_dict["KEGG"].split(",")
 
+                new_KEGG_list = []
+                for element in KEGG_list:
+                    if element[:3] == "ko:":
+                        element = element[3:]
+                        new_KEGG_list.append(element)
+                KEGG_list = new_KEGG_list
+
                 #### check if the gene locates in insert site
                 locate_insert_flag = False
                 for site in insert_list:
@@ -406,15 +456,14 @@ class Extract_KO():
                     self.insert_kos += KEGG_list
                 else:
                     self.no_insert_kos += KEGG_list
-                # print (KEGG_list, locate_insert_flag)
+                # print (genome, gene_interval, KEGG_list, locate_insert_flag)
             # break
-        print (len(self.insert_kos), len(self.no_insert_kos))
-        print_data(self.insert_kos, insert_ko_file)
-        print_data(self.no_insert_kos, no_insert_ko_file)
+        print ("kos", len(self.insert_kos), len(self.no_insert_kos))
+        return self.insert_kos, self.no_insert_kos
 
-    def classify_bkp_kos(self, acc_file, surround):
+    def classify_bkp_kos(self, acc_file):
         bkp_dict = {}
-        self.near = surround
+        # self.near = surround
 
 
         my_bkps = self.read_bkp(acc_file)
@@ -498,8 +547,8 @@ class Extract_KO():
 
 class Extract_COG(Extract_KO):
 
-    def __init__(self, HGT_event_dict):
-        Extract_KO.__init__(self, HGT_event_dict)
+    def __init__(self, HGT_event_dict, surround=0):
+        Extract_KO.__init__(self, HGT_event_dict, surround)
         self.transfer_cog = []
         self.no_transfer_cog = []
         self.insert_cog = []
@@ -532,7 +581,8 @@ class Extract_COG(Extract_KO):
                 # print (KEGG_list, locate_transfer_flag)
             # break
         print (len(self.transfer_cog), len(self.no_transfer_cog))
-        self.data = enrichment_analysis(self.transfer_cog, self.no_transfer_cog, "transfer", self.data)
+        # self.data = enrichment_analysis(self.transfer_cog, self.no_transfer_cog, "transfer", self.data)
+        return self.transfer_cog, self.no_transfer_cog
 
     def classify_cog_insert(self):  # gene in insert site, or not
         for genome in self.insert_sites:
@@ -561,7 +611,8 @@ class Extract_COG(Extract_KO):
                         self.no_insert_cog += [cog[i]]
 
         print (len(self.insert_cog), len(self.no_insert_cog))
-        self.data = enrichment_analysis(self.insert_cog, self.no_insert_cog, "insert", self.data)
+        # self.data = enrichment_analysis(self.insert_cog, self.no_insert_cog, "insert", self.data)
+        return self.insert_cog, self.no_insert_cog
 
     def classify_bkp_cog(self, acc_file, surround):
         self.near = surround
@@ -961,17 +1012,37 @@ def load_gff_list(group_1_gffs):
 
     return kos, cogs
 
+def enrichment_run(group1_cogs, group2_cogs, group1_kos, group2_kos, cog_enrich, kegg_output):
+    ## COG enrichment analysis
+    data = enrichment_analysis(group1_cogs, group2_cogs, "cog", [])
+    df = pd.DataFrame(data, columns = ["category", "category_detail", "p_value", "fold", "gene_num", "profile", "locus_type"])
+    reject, pvals_corrected, _, alphacBonf = multipletests(list(df["p_value"]), alpha=0.05, method='bonferroni')
+    df["p.adj"] = pvals_corrected
+    df.to_csv(cog_enrich, sep=',')
+    print ("enriched COG num", len(data))
+
+
+    ## pathway 
+    print (len(group1_kos), group1_kos[:10])
+    print (len(group2_kos))
+    input_counts = kegg_enrichment.get_pathways(group1_kos, ko_pathway_dict)
+    background_counts = kegg_enrichment.get_pathways(group2_kos, ko_pathway_dict)
+    kegg_enrichment.enrichment_analysis(group1_kos, group2_kos, input_counts, background_counts, kegg_output)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Functional analysis of HGT breakpoints", add_help=False, \
     usage="%(prog)s -h", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     required = parser.add_argument_group("required arguments")
     optional = parser.add_argument_group("optional arguments")
-    required.add_argument("--bkp", type=str, help="<str> concerned HGT breakpoints", metavar="\b")
+    required.add_argument("--bkp", default = "NA", type=str, help="<str> concerned HGT breakpoints", metavar="\b")
+    required.add_argument("--event", default = "NA", type=str, help="<str> concerned HGT events", metavar="\b")
     required.add_argument("--gff", type=str, help="<str> database gene annotation file", metavar="\b")
     # required.add_argument("--groupid", type=str, help="<str> column name used for grouping, default: phenotype", metavar="\b")
     # required.add_argument("--uhgg_meta", type=str, default = "genomes-all_metadata.tsv", help="<str> UHGG taxonomy metadata", metavar="\b")
-    required.add_argument("--kegg_output", type=str, default= "./pathway_enriched.csv", help="<str> KEGG output", metavar="\b")
-    required.add_argument("--cog_output", type=str, default= "./cog_enrich.csv",help="<str> COG output", metavar="\b")
+    # required.add_argument("--kegg_output", type=str, default= "./pathway_enriched.csv", help="<str> KEGG output", metavar="\b")
+    # required.add_argument("--cog_output", type=str, default= "./cog_enrich.csv",help="<str> COG output", metavar="\b")
+    required.add_argument("--outdir", type=str, default= "./",help="<str> outdir", metavar="\b")
+    required.add_argument("--out_prefix", type=str, default= "out",help="<str> out_prefix", metavar="\b")
     required.add_argument("--surround", type=int, default=5000, help="<str> focus on genes with distance within this value", metavar="\b")
     # required.add_argument("--group1", type=str, default = "D006262", help="<str> group1 name.", metavar="\b")
     # required.add_argument("--group2", type=str,  default = "D001249",  help="<str> group2 name.", metavar="\b")
@@ -988,10 +1059,7 @@ if __name__ == "__main__":
     abun_cutoff = args["abun_cutoff"]
     min_gene_frac = args["min_gene_frac"]
     gff = args["gff"]
-    ### output
-    cog_enrich = args["cog_output"] # store COG enrichment results
-    kegg_output = args["kegg_output"] # to store enriched pathways
-    breakpoint_file = args["bkp"]
+
 
 
     with open(sys.path[0] + '/ko_pathway_dict.pickle', 'rb') as f: ## this file is in meta_data/ko_pathway_dict.pickle
@@ -1004,34 +1072,66 @@ if __name__ == "__main__":
     annotation.read_gff()
     print ("annotation is done.")
 
-    ## only consider bkp
-    extract = Extract_KO({})
-    group1_kos, group2_kos = extract.classify_bkp_kos(breakpoint_file, args["surround"])
 
-    cog = Extract_COG({})
-    group1_cogs, group2_cogs = cog.classify_bkp_kos(breakpoint_file, args["surround"])
+    ### output
+    # cog_enrich = args["cog_output"] # store COG enrichment results
+    # kegg_output = args["kegg_output"] # to store enriched pathways
+    out_prefix = args["out_prefix"]
+    ## check if outdir exists, if not, create it
+    if not os.path.exists(args["outdir"]):
+        os.makedirs(args["outdir"])
+
+    breakpoint_file = args["bkp"]
+
+    if breakpoint_file != "NA":
+        cog_enrich = args["outdir"] + "/" + out_prefix + "_COG_enrich.csv"
+        kegg_output = args["outdir"] + "/" + out_prefix + "_KEGG_enrich.csv"
+        ## only consider bkp
+        extract = Extract_KO({}, args["surround"])
+        group1_kos, group2_kos = extract.classify_bkp_kos(breakpoint_file)
+
+        cog = Extract_COG({}, args["surround"])
+        group1_cogs, group2_cogs = cog.classify_bkp_kos(breakpoint_file)
+        enrichment_run(group1_cogs, group2_cogs, group1_kos, group2_kos, cog_enrich, kegg_output)
+
+    identified_hgt = args["event"]
+    if identified_hgt != "NA":
+
+
+        cog_enrich = args["outdir"] + "/" + out_prefix + "_transfer_COG_enrich.csv"
+        kegg_output = args["outdir"] + "/" + out_prefix + "_transfer_KEGG_enrich.csv"
+
+        trans = Transfer_times()
+        trans.read_events(identified_hgt)
+
+        extract = Extract_KO(trans.HGT_event_dict, args["surround"])
+        extract.classify_regions()
+        group1_kos, group2_kos = extract.classify_kos()
+
+        cog = Extract_COG(trans.HGT_event_dict, args["surround"])
+        cog.classify_regions()
+        group1_cogs, group2_cogs = cog.classify_cog()
+        enrichment_run(group1_cogs, group2_cogs, group1_kos, group2_kos, cog_enrich, kegg_output)
+
+
+        cog_enrich = args["outdir"] + "/" + out_prefix + "_insert_COG_enrich.csv"
+        kegg_output = args["outdir"] + "/" + out_prefix + "_insert_KEGG_enrich.csv"
+
+        trans = Transfer_times()
+        trans.read_events(identified_hgt)
+
+        extract = Extract_KO(trans.HGT_event_dict, args["surround"])
+        extract.classify_regions()
+        group1_kos, group2_kos = extract.classify_kos_insert()
+
+        cog = Extract_COG(trans.HGT_event_dict, args["surround"])
+        cog.classify_regions()
+        group1_cogs, group2_cogs = cog.classify_cog_insert()
+        enrichment_run(group1_cogs, group2_cogs, group1_kos, group2_kos, cog_enrich, kegg_output)
 
 
 
-    # group1_kos, group1_cogs = load_gff_list(group_1_gffs)
-    # group2_kos, group2_cogs = load_gff_list(group_2_gffs)
 
-
-    ## COG enrichment analysis
-    data = enrichment_analysis(group1_cogs, group2_cogs, "cog", [])
-    df = pd.DataFrame(data, columns = ["category", "category_detail", "p_value", "fold", "gene_num", "profile", "locus_type"])
-    reject, pvals_corrected, _, alphacBonf = multipletests(list(df["p_value"]), alpha=0.05, method='bonferroni')
-    df["p.adj"] = pvals_corrected
-    df.to_csv(cog_enrich, sep=',')
-    print ("enriched COG num", len(data))
-
-
-    ## pathway 
-    print (len(group1_kos), group1_kos[:10])
-    print (len(group2_kos))
-    input_counts = kegg_enrichment.get_pathways(group1_kos, ko_pathway_dict)
-    background_counts = kegg_enrichment.get_pathways(group2_kos, ko_pathway_dict)
-    kegg_enrichment.enrichment_analysis(group1_kos, group2_kos, input_counts, background_counts, kegg_output)
 
 
     
