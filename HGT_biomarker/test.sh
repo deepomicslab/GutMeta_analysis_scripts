@@ -1,3 +1,1 @@
-
-#
-python main.py --groupid phenotype --ann ERP010700.metadata.v2.tsv --breakpoint_dir ./ --output test.biomarker.out.tsv
+python main.py --groupid phenotype --ann ERP010700.metadata.v2.tsv --breakpoint_dir acc_dir --output test.biomarker.out.tsv --uhgg_meta /mnt/d/HGT/UHGG/upload/genomes-all_metadata.tsv --all_acc demo_input.acc.csv

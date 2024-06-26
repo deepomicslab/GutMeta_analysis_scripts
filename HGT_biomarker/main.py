@@ -90,10 +90,11 @@ class Data_load():
             acc_file = line.strip()
             sra_id = acc_file.split("/")[-1].split(".")[0]
             my_bkps = self.read_bkp(acc_file)
+            print (sra_id, len(my_bkps))
             if len(my_bkps) > 0 and sra_id in phenotype_dict:
                 sample = Sample(my_bkps, sra_id, phenotype_dict[sra_id])
                 self.sample_obj_list.append(sample)
-        print ("data is loaded.")
+        print ("data is loaded.", "sample num:", len(self.sample_obj_list))
         
     def read_bkp(self, bkp_file):
         my_bkps = []
@@ -217,7 +218,7 @@ class Marker():
         df = pd.DataFrame(data, columns = ["genus_pair", "p_value", "oddsratio", "gp_num"])
         reject, pvals_corrected, _, alphacBonf = multipletests(list(df["p_value"]), alpha=0.05, method='bonferroni')
         df["p.adj"] = pvals_corrected
-        df.to_csv(output, sep='\t')
+        df.to_csv(output, sep=',')
 
         # filtered_df = df[df['p.adj'] < 0.05]
         # filtered_df.to_csv(output, sep='\t')
@@ -258,6 +259,7 @@ class Marker():
                 index = 1
                 group2_num += 1
             else:
+                print ("discard group")
                 continue 
             selected_samples.append(sample.ID)
         print (self.group1, group1_num, self.group2, group2_num)
@@ -330,6 +332,20 @@ class Marker():
         # plt.show()
         plt.savefig(f'/mnt/d/HGT/biomarker/class_{self.group1}_vs_{self.group2}.pdf')
 
+def split_input_acc(all_acc, output_csv_path):
+    ## check if output_csv_path exists, if not create it
+    if not os.path.exists(output_csv_path):
+        os.makedirs(output_csv_path)
+    # Open the original CSV file
+    with open(all_acc, mode='r', newline='') as file:
+        for line in file:
+            if re.search("#sample", line):
+                sample_name = line.strip().split(":")[1]
+                output_csv = f'{output_csv_path}/{sample_name}.acc.csv'
+                out_f = open(output_csv, "w")
+            else:
+                print (line, file=out_f, end = '')
+
 
 if __name__ == "__main__":
 
@@ -339,12 +355,14 @@ if __name__ == "__main__":
     optional = parser.add_argument_group("optional arguments")
     required.add_argument("--ann", type=str, help="<str> input file of group info", metavar="\b")
     required.add_argument("--groupid", type=str, help="<str> column name used for grouping, default: phenotype", metavar="\b")
-    required.add_argument("--uhgg_meta", type=str, default = "genomes-all_metadata.tsv", help="<str> UHGG taxonomy metadata", metavar="\b")
+    required.add_argument("--uhgg_meta", type=str, help="<str> UHGG taxonomy metadata, genomes-all_metadata.tsv", metavar="\b")
+    # required.add_argument("--uhgg_meta", type=str, default = "genomes-all_metadata.tsv", help="<str> UHGG taxonomy metadata", metavar="\b")
     required.add_argument("--output", type=str, default = "HGT_biomarker.tsv", help="<str> HGT biomarker output", metavar="\b")
     required.add_argument("--taxa_level", type=int, default=5, help="<str> Original Metagenomic reference", metavar="\b")
     required.add_argument("--group1", type=str, default = "D006262", help="<str> group1 name.", metavar="\b")
     required.add_argument("--group2", type=str,  default = "D001249",  help="<str> group2 name.", metavar="\b")
-    required.add_argument("--breakpoint_dir", type=str, help="<str> HGT breakpoint_dir.", metavar="\b")
+    required.add_argument("--all_acc", type=str, help="<str> a file contains breakpoints of all samples.", metavar="\b")
+    required.add_argument("--breakpoint_dir", type=str, help="<str> HGT breakpoint_dir to store the acc.csv file for each sample.", metavar="\b")
     # required.add_argument("-s", type=str, help="<str> split reads bam file.", metavar="\b")
     optional.add_argument("--abun_cutoff", type=float, default=1e-7, help="bkp abun cutoff", metavar="\b")
     # optional.add_argument("-b", type=str, help="bed file of extracted ref.", metavar="\b")
@@ -372,8 +390,9 @@ if __name__ == "__main__":
         phenotype_dict[index] = row.values[0]
 
     taxonomy = Taxonomy(args["uhgg_meta"])
-    print (group)
+    # print (group)
 
+    split_input_acc(args["all_acc"], args["breakpoint_dir"])
     dat = Data_load(args["breakpoint_dir"])
     dat.read_samples()
 
