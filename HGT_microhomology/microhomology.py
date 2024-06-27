@@ -582,12 +582,16 @@ if __name__ == "__main__":
             #     continue
             # print (bkp.from_ref)
             print (max_homology_len, alignment[0],  alignment[1], from_seq, to_seq, sep="\n")
-
             data.append(["sample", bkp.from_ref, bkp.from_bkp, bkp.from_strand, bkp.from_bkp-args["seq_len"], bkp.from_bkp+args["seq_len"],from_seq, \
-                bkp.to_ref, bkp.to_bkp, bkp.to_strand, bkp.to_bkp-args["seq_len"], bkp.to_bkp+args["seq_len"],to_seq, max_homology_len, alignment[0],  alignment[1]])
+                bkp.to_ref, bkp.to_bkp, bkp.to_strand, bkp.to_bkp-args["seq_len"], bkp.to_bkp+args["seq_len"],to_seq])
         
-        df = pd.DataFrame(data, columns = ["sample", "from_ref", "from_bkp", "from_strand", "from_start", "from_end", "from_seq",  \
-        "to_ref", "to_bkp", "to_strand", "to_start", "to_end", "to_seq", "homology_len", "from_alignment", "to_alignment"])
+            df = pd.DataFrame(data, columns = ["sample", "from_ref", "from_bkp", "from_strand", "from_start", "from_end", "from_seq",  \
+            "to_ref", "to_bkp", "to_strand", "to_start", "to_end", "to_seq"])
+        #     data.append(["sample", bkp.from_ref, bkp.from_bkp, bkp.from_strand, bkp.from_bkp-args["seq_len"], bkp.from_bkp+args["seq_len"],from_seq, \
+        #         bkp.to_ref, bkp.to_bkp, bkp.to_strand, bkp.to_bkp-args["seq_len"], bkp.to_bkp+args["seq_len"],to_seq, max_homology_len, alignment[0],  alignment[1]])
+        
+        # df = pd.DataFrame(data, columns = ["sample", "from_ref", "from_bkp", "from_strand", "from_start", "from_end", "from_seq",  \
+        # "to_ref", "to_bkp", "to_strand", "to_start", "to_end", "to_seq", "homology_len", "from_alignment", "to_alignment"])
         df.to_csv(args["output"], sep=',')  
 
 
@@ -606,7 +610,7 @@ if __name__ == "__main__":
                     to_bkp = event.del_start
                     max_homology_len, alignment, from_seq, to_seq = mic.for_each_artifical_bkp(from_ref, from_bkp, to_ref, to_bkp, event.reverse_flag)
                     data.append([sample, from_ref, from_bkp, event.reverse_flag, from_bkp-args["seq_len"], from_bkp+args["seq_len"],from_seq, \
-                to_ref, to_bkp, event.reverse_flag, to_bkp-args["seq_len"], to_bkp+args["seq_len"],to_seq, max_homology_len, alignment[0],  alignment[1]])
+                to_ref, to_bkp, event.reverse_flag, to_bkp-args["seq_len"], to_bkp+args["seq_len"],to_seq])
 
                     from_ref = event.del_genome
                     from_bkp = event.del_end
@@ -614,7 +618,7 @@ if __name__ == "__main__":
                     to_bkp = event.ins_pos
                     max_homology_len, alignment, from_seq, to_seq = mic.for_each_artifical_bkp(from_ref, from_bkp, to_ref, to_bkp, event.reverse_flag)
                     data.append([sample, from_ref, from_bkp, event.reverse_flag, from_bkp-args["seq_len"], from_bkp+args["seq_len"],from_seq, \
-                to_ref, to_bkp, event.reverse_flag, to_bkp-args["seq_len"], to_bkp+args["seq_len"],to_seq, max_homology_len, alignment[0],  alignment[1]])
+                to_ref, to_bkp, event.reverse_flag, to_bkp-args["seq_len"], to_bkp+args["seq_len"],to_seq])
                 else:
                     from_ref = event.ins_genome
                     from_bkp = event.ins_pos
@@ -622,18 +626,18 @@ if __name__ == "__main__":
                     to_bkp = event.del_end
                     max_homology_len, alignment, from_seq, to_seq = mic.for_each_artifical_bkp(from_ref, from_bkp, to_ref, to_bkp, event.reverse_flag)
                     data.append([sample, from_ref, from_bkp, event.reverse_flag, from_bkp-args["seq_len"], from_bkp+args["seq_len"],from_seq, \
-                to_ref, to_bkp, event.reverse_flag, to_bkp-args["seq_len"], to_bkp+args["seq_len"],to_seq, max_homology_len, alignment[0],  alignment[1]])
+                to_ref, to_bkp, event.reverse_flag, to_bkp-args["seq_len"], to_bkp+args["seq_len"],to_seq])
                     from_ref = event.del_genome
                     from_bkp = event.del_start
                     to_ref = event.ins_genome
                     to_bkp = event.ins_pos
                     max_homology_len, alignment, from_seq, to_seq = mic.for_each_artifical_bkp(from_ref, from_bkp, to_ref, to_bkp, event.reverse_flag)
                     data.append([sample, from_ref, from_bkp, event.reverse_flag, from_bkp-args["seq_len"], from_bkp+args["seq_len"],from_seq, \
-                to_ref, to_bkp, event.reverse_flag, to_bkp-args["seq_len"], to_bkp+args["seq_len"],to_seq, max_homology_len, alignment[0],  alignment[1]])
+                to_ref, to_bkp, event.reverse_flag, to_bkp-args["seq_len"], to_bkp+args["seq_len"],to_seq])
                     # print (max_homology_len, alignment[0],  alignment[1], from_seq, to_seq, sep="\n")
 
         df = pd.DataFrame(data, columns = ["sample", "from_ref", "from_bkp", "from_strand", "from_start", "from_end", "from_seq",  \
-        "to_ref", "to_bkp", "to_strand", "to_start", "to_end", "to_seq", "homology_len", "from_alignment", "to_alignment"])
+        "to_ref", "to_bkp", "to_strand", "to_start", "to_end", "to_seq"])
         df.to_csv(args["output"], sep=',')  
 
 
