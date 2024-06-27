@@ -271,6 +271,24 @@ class Micro_homo():
         # return score
         return self.get_micro_homo(from_seq, to_seq)
 
+    def for_each_artifical_bkp(self, from_ref, from_bkp, to_ref, to_bkp, reverse_flag):
+        from_bkp -= 1
+        from_seq = self.extract_ref_seq(from_ref, from_bkp-self.cutoff, from_bkp+self.cutoff)
+        to_seq = self.extract_ref_seq(to_ref, to_bkp-self.cutoff, to_bkp+self.cutoff)
+        if bool(reverse_flag) == True:
+            from_seq = self.get_reverse_complement_seq(from_seq)      
+
+        if re.search(">", from_seq) or re.search(">", to_seq):
+            return -1, -1, '', ''
+        if countN(from_seq) > 0 or countN(to_seq) > 0:
+            return -1, -1, '', ''
+        # test = ["GUT_GENOME018982_31", "GUT_GENOME239728_21"]
+        # if bkp.from_ref in test and bkp.to_ref in test:
+        #     print (bkp.from_ref, bkp.to_ref, from_seq, to_seq, self.find_mh(from_seq, to_seq))
+        # score = self.get_mic_homo(from_seq, to_seq)
+        # return score
+        return self.get_micro_homo(from_seq, to_seq)
+
     def for_two_random_bkps(self, bkp1, bkp2):
         bkp1.from_bkp -= 1
         from_seq = self.extract_ref_seq(bkp1.from_ref, bkp1.from_bkp - self.cutoff, bkp1.from_bkp + self.cutoff)
@@ -437,6 +455,50 @@ def countN(sequence):
             count += 1
     return count
 
+class Event(object):
+
+    def __init__(self, array):
+        self.sample = array[1]
+        self.ins_genome = array[2]
+        self.ins_genome_pure = "_".join(self.ins_genome.split("_")[:-1])
+        self.ins_pos = int(array[3])
+        self.del_genome = array[4]
+        self.del_start = int(array[5])
+        self.del_end = int(array[6])
+        self.reverse_flag = array[7]
+        self.IS_flag = None
+        self.Transposon_flag = None
+
+        bin_size = 100
+        self.tag = self.ins_genome + "&" + str(round(self.ins_pos/bin_size)) + "&" + self.del_genome + "&" + \
+            str(round(self.del_start/bin_size)) + "&" + str(round(self.ins_pos/bin_size))
+
+
+class Transfer_times():
+
+    def __init__(self):
+        self.HGT_event_dict = {}
+        self.max_diff = 50
+
+    def read_events(self, identified_hgt):
+        i = 0
+        for line in open(identified_hgt):
+            array = line.strip().split(",")
+            array = ["x"] + array
+            if array[1] == "sample":
+                continue
+            event = Event(array)
+            sample = array[1]
+            # if phenotype_dict[sample][0] == "Time-series":
+            #     continue
+            # print (phenotype_dict[sample][0])
+            i += 1
+
+            if sample not in self.HGT_event_dict:
+                self.HGT_event_dict[sample] = []
+            self.HGT_event_dict[sample].append(event) 
+        print ("sample num ", len(self.HGT_event_dict), "kept HGTs num is", i)
+
 def extract_homology(alignment):
     homology_list = []
     
@@ -484,7 +546,8 @@ if __name__ == "__main__":
     usage="%(prog)s -h", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     required = parser.add_argument_group("required arguments")
     optional = parser.add_argument_group("optional arguments")
-    required.add_argument("--bkp", type=str, help="<str> concerned HGT breakpoints", metavar="\b")
+    required.add_argument("--bkp", default = "NA", type=str, help="<str> concerned HGT breakpoints", metavar="\b")
+    required.add_argument("--event", default = "NA", type=str, help="<str> concerned HGT events", metavar="\b")
     required.add_argument("--database", type=str, help="<str> UHGG database file", metavar="\b")
     required.add_argument("--min_len", type=int,default=2, help="minimum microhomology length", metavar="\b")
     # required.add_argument("--uhgg_meta", type=str, default = "genomes-all_metadata.tsv", help="<str> UHGG taxonomy metadata", metavar="\b")
@@ -502,28 +565,80 @@ if __name__ == "__main__":
 
     # load data
     database = args["database"]
-    all_bkps = read_samples(args["bkp"])
-    # abun_cutoff = args["abun_cutoff"]
-    # bin_size = args["bin_size"]
 
-    data = []
-    mic = Micro_homo()
-    for bkp in all_bkps:
+    if args["bkp"] != "NA":
+        all_bkps = read_samples(args["bkp"])
+        # abun_cutoff = args["abun_cutoff"]
+        # bin_size = args["bin_size"]
+
+        data = []
+        mic = Micro_homo()
+        for bkp in all_bkps:
+            
+            max_homology_len, alignment, from_seq, to_seq = mic.for_each_bkp(bkp)
+            # if max_homology_len == -1:
+            #     continue
+            # if max_homology_len < args["min_len"]:
+            #     continue
+            # print (bkp.from_ref)
+            print (max_homology_len, alignment[0],  alignment[1], from_seq, to_seq, sep="\n")
+
+            data.append(["sample", bkp.from_ref, bkp.from_bkp, bkp.from_strand, bkp.from_bkp-args["seq_len"], bkp.from_bkp+args["seq_len"],from_seq, \
+                bkp.to_ref, bkp.to_bkp, bkp.to_strand, bkp.to_bkp-args["seq_len"], bkp.to_bkp+args["seq_len"],to_seq, max_homology_len, alignment[0],  alignment[1]])
         
-        max_homology_len, alignment, from_seq, to_seq = mic.for_each_bkp(bkp)
-        if max_homology_len == -1:
-            continue
-        if max_homology_len < args["min_len"]:
-            continue
-        # print (bkp.from_ref)
-        print (max_homology_len, alignment[0],  alignment[1], from_seq, to_seq, sep="\n")
+        df = pd.DataFrame(data, columns = ["sample", "from_ref", "from_bkp", "from_strand", "from_start", "from_end", "from_seq",  \
+        "to_ref", "to_bkp", "to_strand", "to_start", "to_end", "to_seq", "homology_len", "from_alignment", "to_alignment"])
+        df.to_csv(args["output"], sep=',')  
 
-        data.append([bkp.from_ref, bkp.from_bkp, bkp.from_strand, bkp.from_bkp-args["seq_len"], bkp.from_bkp+args["seq_len"],from_seq, \
-            bkp.to_ref, bkp.to_bkp, bkp.to_strand, bkp.to_bkp-args["seq_len"], bkp.to_bkp+args["seq_len"],to_seq, max_homology_len, alignment[0],  alignment[1]])
-    
-    df = pd.DataFrame(data, columns = ["from_ref", "from_bkp", "from_strand", "from_start", "from_end", "from_seq",  \
-    "to_ref", "to_bkp", "to_strand", "to_start", "to_end", "to_seq", "homology_len", "from_alignment", "to_alignment"])
-    df.to_csv(args["output"], sep='\t')  
+
+    identified_hgt = args["event"]
+    if identified_hgt != "NA":
+        trans = Transfer_times()
+        trans.read_events(identified_hgt)
+        data = []
+        mic = Micro_homo()
+        for sample in trans.HGT_event_dict:
+            for event in trans.HGT_event_dict[sample]:
+                if event.reverse_flag == False:
+                    from_ref = event.ins_genome
+                    from_bkp = event.ins_pos
+                    to_ref = event.del_genome
+                    to_bkp = event.del_start
+                    max_homology_len, alignment, from_seq, to_seq = mic.for_each_artifical_bkp(from_ref, from_bkp, to_ref, to_bkp, event.reverse_flag)
+                    data.append([sample, from_ref, from_bkp, event.reverse_flag, from_bkp-args["seq_len"], from_bkp+args["seq_len"],from_seq, \
+                to_ref, to_bkp, event.reverse_flag, to_bkp-args["seq_len"], to_bkp+args["seq_len"],to_seq, max_homology_len, alignment[0],  alignment[1]])
+
+                    from_ref = event.del_genome
+                    from_bkp = event.del_end
+                    to_ref = event.ins_genome
+                    to_bkp = event.ins_pos
+                    max_homology_len, alignment, from_seq, to_seq = mic.for_each_artifical_bkp(from_ref, from_bkp, to_ref, to_bkp, event.reverse_flag)
+                    data.append([sample, from_ref, from_bkp, event.reverse_flag, from_bkp-args["seq_len"], from_bkp+args["seq_len"],from_seq, \
+                to_ref, to_bkp, event.reverse_flag, to_bkp-args["seq_len"], to_bkp+args["seq_len"],to_seq, max_homology_len, alignment[0],  alignment[1]])
+                else:
+                    from_ref = event.ins_genome
+                    from_bkp = event.ins_pos
+                    to_ref = event.del_genome
+                    to_bkp = event.del_end
+                    max_homology_len, alignment, from_seq, to_seq = mic.for_each_artifical_bkp(from_ref, from_bkp, to_ref, to_bkp, event.reverse_flag)
+                    data.append([sample, from_ref, from_bkp, event.reverse_flag, from_bkp-args["seq_len"], from_bkp+args["seq_len"],from_seq, \
+                to_ref, to_bkp, event.reverse_flag, to_bkp-args["seq_len"], to_bkp+args["seq_len"],to_seq, max_homology_len, alignment[0],  alignment[1]])
+                    from_ref = event.del_genome
+                    from_bkp = event.del_start
+                    to_ref = event.ins_genome
+                    to_bkp = event.ins_pos
+                    max_homology_len, alignment, from_seq, to_seq = mic.for_each_artifical_bkp(from_ref, from_bkp, to_ref, to_bkp, event.reverse_flag)
+                    data.append([sample, from_ref, from_bkp, event.reverse_flag, from_bkp-args["seq_len"], from_bkp+args["seq_len"],from_seq, \
+                to_ref, to_bkp, event.reverse_flag, to_bkp-args["seq_len"], to_bkp+args["seq_len"],to_seq, max_homology_len, alignment[0],  alignment[1]])
+                    # print (max_homology_len, alignment[0],  alignment[1], from_seq, to_seq, sep="\n")
+
+        df = pd.DataFrame(data, columns = ["sample", "from_ref", "from_bkp", "from_strand", "from_start", "from_end", "from_seq",  \
+        "to_ref", "to_bkp", "to_strand", "to_start", "to_end", "to_seq", "homology_len", "from_alignment", "to_alignment"])
+        df.to_csv(args["output"], sep=',')  
+
+
+
+
 
 
     # compare the microhomology length between HGT breakpoint pairs and random two HGT breakpoints 
