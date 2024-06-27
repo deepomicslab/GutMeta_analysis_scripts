@@ -12,7 +12,7 @@ from scipy import stats
 from scipy.stats import mannwhitneyu
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
+# import seaborn as sns
 from pyfaidx import Fasta
 from skbio.alignment import local_pairwise_align_ssw
 from skbio.alignment import global_pairwise_align_nucleotide
@@ -375,6 +375,7 @@ class Micro_homo():
         from_seq = DNA(seq1)
         to_seq = DNA(seq2)
         alignment, score, start_end_positions = global_pairwise_align_nucleotide(from_seq, to_seq) #, mismatch_score = -1000
+        # alignment, score, start_end_positions = local_pairwise_align_ssw(from_seq, to_seq)
 
         max_homology_len = extract_homology(alignment)
         # if max_homology_len > 0:
@@ -515,7 +516,7 @@ if __name__ == "__main__":
         if max_homology_len < args["min_len"]:
             continue
         # print (bkp.from_ref)
-        print (max_homology_len, alignment[0],  alignment[1])
+        print (max_homology_len, alignment[0],  alignment[1], from_seq, to_seq, sep="\n")
 
         data.append([bkp.from_ref, bkp.from_bkp, bkp.from_strand, bkp.from_bkp-args["seq_len"], bkp.from_bkp+args["seq_len"],from_seq, \
             bkp.to_ref, bkp.to_bkp, bkp.to_strand, bkp.to_bkp-args["seq_len"], bkp.to_bkp+args["seq_len"],to_seq, max_homology_len, alignment[0],  alignment[1]])
