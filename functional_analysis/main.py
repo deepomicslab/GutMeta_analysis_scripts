@@ -112,7 +112,7 @@ def get_backgroud(scaffold, db, range_excluded):
 
 ops, args = getopt.getopt(sys.argv[1:], '', ['db_dir=', 'hgt=', 'fr_size=', 'ko_pathway_dict='])
 db_file = '/data2/platform/gutmeta_v2_platform/Database/genome/DB.genome_annotation'
-ko_pathway_dict = '/data2/platform/gutmeta_v2_platform/Database/ko_pathway_dict.pickle'
+ko_pathway_dict = '/data2/platform/gutmeta_v2_platform/Database/function_db/ko_pathway_dict.pickle'
 fr_size = 1000
 outdir = '.'
 for op, arg in ops:
