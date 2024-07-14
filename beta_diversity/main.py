@@ -106,7 +106,7 @@ for t in fullname_dict.keys():
     spair_list = ['{}:{}'.format(sample1_list[i], sample2_list[i]) for i in range(len(sample1_list))]
     matrix_df_new_t = pd.DataFrame({'sample_pair': spair_list, 'group': ppair_list, 'taxonomy_level': taxonomy_fullname, 'beta_diversity': values})
     matrix_df_new = pd.concat([matrix_df_new, matrix_df_new_t])
-matrix_df_new.to_csv('output.beta_diversity.results.tsv ', sep='\t', index=False)
+matrix_df_new.to_csv('output.beta_diversity.results.tsv', sep='\t', index=False)
 
 p_df_new = pd.DataFrame(columns=['taxonomy_level', 'group1', 'group2', 'g1_n', 'g2_n', 'g1_occ', 'g2_occ', 'g1_mean', 'g1_variance', 'g2_variance', 'g2_mean', 'g1/g2', 'enrich', 'pvalue'])
 nsample = phenos.shape[0]

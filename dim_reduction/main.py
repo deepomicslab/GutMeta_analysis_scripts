@@ -64,7 +64,7 @@ for i in range(len(tax_list)):
 
 
     if i != 0 and (method == 'tSNE' or len(split_tax[tax].index) > int(axis_n)):
-        output = 'output.dimension_reduction.{}.{}.tsv '.format(method,fullname_dict[tax])
+        output = 'output.dimension_reduction.{}.{}.tsv'.format(method,fullname_dict[tax])
         #output = 'output.' + method + '.reduce_dim.' + tax + '.tsv'
         result = subprocess.run(['Rscript',script_path,'-i',tax_abd,'-o',output,'-t',tax,'-m',method,'-r',axis_n,'-d',dist_method],stdout=subprocess.PIPE)
         if result.returncode > 0:

@@ -43,7 +43,7 @@ def search_row(idx, df, db, fr_size):
     --fr_size    <int> flanking region size
 '''
 ops, args = getopt.getopt(sys.argv[1:], '', ['db=', 'hgt=', 'fr_size='])
-db_file = '/data2/platform/gutmeta_v2_platform/Database/HGT/ DB.HGT_clusters.annotated.tsv'
+db_file = '/data2/platform/gutmeta_v2_platform/Database/HGT/DB.HGT_clusters.annotated.tsv'
 fr_size = 1000
 for op, arg in ops:
     if op == '--db':

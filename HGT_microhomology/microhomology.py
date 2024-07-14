@@ -552,7 +552,7 @@ if __name__ == "__main__":
     required.add_argument("--database", type=str, help="<str> UHGG database file", metavar="\b")
     required.add_argument("--min_len", type=int,default=2, help="minimum microhomology length", metavar="\b")
     # required.add_argument("--uhgg_meta", type=str, default = "genomes-all_metadata.tsv", help="<str> UHGG taxonomy metadata", metavar="\b")
-    required.add_argument("--output", type=str, default= "output.microhomology_annotation.annotated.tsv ", help="<str> output", metavar="\b")
+    required.add_argument("--output", type=str, default= "output.microhomology_annotation.annotated.tsv", help="<str> output", metavar="\b")
     # required.add_argument("--cog_output", type=str, default= "./cog_enrich.csv",help="<str> COG output", metavar="\b")
     # required.add_argument("--surround", type=int, default=5000, help="<str> focus on genes with distance within this value", metavar="\b")
     optional.add_argument("--seq_len", type=int, default=20, help="upstream and downstream length from the BKP pos", metavar="\b")
