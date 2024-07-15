@@ -33,7 +33,7 @@ def nfr(d_df, profile, sname):
 python_file = os.path.abspath(__file__) 
 python_dir = os.path.dirname(python_file)
 
-idir = '.'
+odir = '.'
 top_n = 0
 ops, args = getopt.getopt(sys.argv[1:], '', ['abdf=', 'gcn_d=', 'top_n=', 'odir='])
 for op, arg in ops:
@@ -70,9 +70,9 @@ elif top_n > 0:
 else:
     top_n = 'all'
 
-with open(os.path.join(idir, '{}.nFR.txt'.format(sname)), 'w') as f:
+with open(os.path.join(odir, '{}.nFR.txt'.format(sname)), 'w') as f:
     f.write(str(nFR))
-edge_df.to_csv(os.path.join(idir, '{}.nFR.top[{}].edge.tsv'.format(sname, top_n)), sep='\t', header=False, index=False)
+edge_df.to_csv(os.path.join(odir, '{}.nFR.top[{}].edge.tsv'.format(sname, top_n)), sep='\t', header=False, index=False)
 
 
     

@@ -6,10 +6,10 @@
 #SBATCH --error=/data2/platform/gutmeta_v2_platform/task_logs/error/error_%j.error
 #SBATCH --mem=50G
 
-module load  GCCcore/11.2.0 Python/3.9.6 
+# module load  GCCcore/11.2.0 Python/3.9.6 
 #module load GCC/11.2.0  OpenMPI/4.1.1
 #module load MMseqs2/13-45111
-module load scikit-bio/0.5.6-Python-3.9.6
+# module load scikit-bio/0.5.6-Python-3.9.6
 echo 'module load complete'
 
 #export PATH=/home/platform/phage_db/tools/prodigal-gv:$PATH

@@ -15,6 +15,7 @@ import os
     --method <str> method for alpha diversity, default: shannon. [shannon/simpson/invsimpson/ACE/Chao1/observedSpecies]
     --reads  <int> number of reads used to calculate richness, need with methods: ACE/Chao1/observedSpecies, default: 500000
     --testing <str> method for testing, default: t.test. [wilcox.test/t.test/kruskal.test/aov]
+    --outdir <str> output directory, default: current directory
 '''
 
 python_file = os.path.abspath(__file__) 
@@ -23,8 +24,9 @@ script_path = os.path.join(python_dir, 'alpha.R')
 
 ifile1 = ''
 ifile2 = ''
+outdir = '.'
 
-ops, args = getopt.getopt(sys.argv[1:], '', ['abdf=', 'dsf=', 'ann=', 'method=', 'reads=', 'groupid=',"testing="])
+ops, args = getopt.getopt(sys.argv[1:], '', ['abdf=', 'dsf=', 'ann=', 'method=', 'reads=', 'groupid=',"testing=", 'outdir='])
 for op, arg in ops:
     if op == '--abdf':
         ifile1 = arg
@@ -40,26 +42,28 @@ for op, arg in ops:
         reads = arg
     if op == '--testing':
         testing = arg
+    if op == '--outdir':
+        outdir = arg
 
 merged_df = get_merged(ifile1,ifile2)
 group = metadata2gf(metadata,groupid)
 if not check_valid(group, merged_df):
     exit(2)
-group_file = 'merged_input.group_info.tsv'
+group_file = os.path.join(outdir, 'merged_input.group_info.tsv')
 group.to_csv(group_file, sep='\t')
 
 
-merged_df.to_csv('merged_input.abundance.all.tsv', sep='\t')
+merged_df.to_csv(os.path.join(outdir, 'merged_input.abundance.all.tsv'), sep='\t')
 split_tax = tax_split(merged_df)
 tax_list = [i for i in split_tax.keys()]
 
-output1 = 'output.alpha_diversity.tsv'
-output2 = 'output.pvalue.tsv'
+output1 = os.path.join(outdir, 'output.alpha_diversity.tsv')
+output2 = os.path.join(outdir, 'output.pvalue.tsv')
 
 for i in range(len(tax_list)):
     tax = tax_list[i]
     split_tax[tax].index.name = tax
-    tax_abd = 'merged_input.abundance.' + tax +'.tsv'
+    tax_abd = os.path.join(outdir, 'merged_input.abundance.{}.tsv'.format(tax))
     split_tax[tax].to_csv(tax_abd, sep='\t')
     if i == 0:
         result = subprocess.run(['Rscript',script_path,'-i',tax_abd,'-g',group_file,'-o',output1,'-p',output2,'-t',tax,'-m',method,'-r',reads,'-e',testing,'-a','F'],stdout=subprocess.PIPE)
@@ -74,10 +78,10 @@ fullname_dict = {}
 for t in taxonomy_fullname.split('/'):
     fullname_dict[t[0]] = t
 
-diversity = pd.read_csv('output.alpha_diversity.tsv', sep='\t', index_col=0, header=0)
-pvalue = pd.read_csv('output.pvalue.tsv', sep='\t', index_col=0, header=0)
+diversity = pd.read_csv(os.path.join(outdir, 'output.alpha_diversity.tsv'), sep='\t', index_col=0, header=0)
+pvalue = pd.read_csv(os.path.join(outdir, 'output.pvalue.tsv'), sep='\t', index_col=0, header=0)
 reformat_diversity = pd.DataFrame(columns=['sample', 'group', 'taxonomy_level', 'alpha_diversity'])
-phenos = pd.read_csv('merged_input.group_info.tsv', sep='\t', index_col=0, header=0)
+phenos = pd.read_csv(os.path.join(outdir, 'merged_input.group_info.tsv'), sep='\t', index_col=0, header=0)
 for s in diversity.columns:
     pheno = phenos.loc[s, groupid]
     for taxa_level in diversity.index:
@@ -86,7 +90,7 @@ for s in diversity.columns:
         reformat_diversity.loc[idx, 'taxonomy_level'] = fullname_dict[taxa_level]
         reformat_diversity.loc[idx, 'alpha_diversity'] = diversity.loc[taxa_level, s]
         reformat_diversity.loc[idx, 'group'] = pheno
-reformat_diversity.to_csv('output.alpha_diversity.results.tsv', sep='\t', index=False)
+reformat_diversity.to_csv(os.path.join(outdir, 'output.alpha_diversity.results.tsv'), sep='\t', index=False)
 
 pheno_set = list(set(phenos[groupid]))
 g1 = pheno_set[0]
@@ -106,4 +110,4 @@ for taxa_level in pvalue.index:
     else:
         pvalue_reformat.loc[fullname_dict[taxa_level], 'enrich'] = g2
 
-pvalue_reformat.to_csv('output.alpha_diversity.pvalue.tsv', sep='\t')
+pvalue_reformat.to_csv(os.path.join(outdir, 'output.alpha_diversity.pvalue.tsv'), sep='\t')

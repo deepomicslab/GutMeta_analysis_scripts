@@ -13,6 +13,7 @@ import os
     --method <str> method for beta diversity calculation [bray/euclidean/jaccard/manhattan/weighted_unifrac/unweighted_unifrac]
     --reads  <int> number of reads used to calculate richness, need with methods: ACE/Chao1/observedSpecies, default: 500000
     --testing <str> method for testing, default: t.test. [wilcox.test/t.test/kruskal.test/aov]
+    --outdir <str> output directory, default: current directory
 '''
 
 python_file = os.path.abspath(__file__) 
@@ -21,8 +22,9 @@ script_path = os.path.join(python_dir, 'beta.R')
 
 ifile1 = ''
 ifile2 = ''
+outdir = '.'
 
-ops, args = getopt.getopt(sys.argv[1:], '', ['abdf=', 'dsf=', 'ann=', 'method=', 'reads=', 'groupid=',"testing="])
+ops, args = getopt.getopt(sys.argv[1:], '', ['abdf=', 'dsf=', 'ann=', 'method=', 'reads=', 'groupid=',"testing=", 'outdir='])
 for op, arg in ops:
     if op == '--abdf':
         ifile1 = arg
@@ -38,16 +40,18 @@ for op, arg in ops:
         reads = arg
     if op == '--testing':
         testing = arg
+    if op == '--outdir':
+        outdir = arg
 
 merged_df = get_merged(ifile1,ifile2)
 group = metadata2gf(metadata,groupid)
 if not check_valid(group, merged_df):
     exit(2)
-group_file = 'merged_input.group_info.tsv'
+group_file = os.path.join(outdir, 'merged_input.group_info.tsv')
 group.to_csv(group_file, sep='\t')
 
 
-merged_df.to_csv('merged_input.abundance.all.tsv', sep='\t')
+merged_df.to_csv(os.path.join(outdir, 'merged_input.abundance.all.tsv'), sep='\t')
 split_tax = tax_split(merged_df)
 tax_list = [i for i in split_tax.keys()]
 
@@ -57,14 +61,14 @@ for i in range(len(tax_list)):
     split_tax[tax].index.name = tax
     new_tax = [(tax_id.split('|')[-1]) for tax_id in list(split_tax[tax].index)]
     split_tax[tax].index = new_tax
-    tax_abd = 'merged_input.abundance.' + tax +'.tsv'
+    tax_abd = os.path.join(outdir, 'merged_input.abundance.{}.tsv'.format(tax))
     split_tax[tax].to_csv(tax_abd, sep='\t')
 
-    output1 = 'output.' + method + '.beta_diversity.' + tax
-    output2 = 'output.' + method + '.pvalue.' + tax + '.tsv'
+    output1 = os.path.join(outdir, 'output.{}.beta_diversity.{}'.format(method, tax))
+    output2 = os.path.join(outdir, 'output.{}.pvalue.{}.tsv'.format(method, tax))
 
     if (method == "weighted_unifrac" or method == "unweighted_unifrac"):
-        tree = 'merged_input.newick_tree.' + tax + '.txt'
+        tree = os.path.join(outdir, 'merged_input.newick_tree.{}.txt'.format(tax))
         tree_f = open(tree,'w')
         tree_f.write(map2newick(split_tax[tax], 0.5))
         tree_f.close()
@@ -76,7 +80,7 @@ for i in range(len(tax_list)):
         print (result.stderr)
         exit(1)
 
-phenos = pd.read_csv('merged_input.group_info.tsv', sep='\t', index_col=0, header=0)
+phenos = pd.read_csv(group_file, sep='\t', index_col=0, header=0)
 pheno_set = list(set(phenos[groupid]))
 g1 = pheno_set[0]
 g2 = pheno_set[1]
@@ -88,7 +92,7 @@ for t in taxonomy_fullname.split('/'):
 matrix_df_new = pd.DataFrame(columns=['sample_pair', 'group', 'taxonomy_level', 'beta_diversity'])
 for t in fullname_dict.keys():
     taxonomy_fullname = fullname_dict[t]
-    infile = 'output.{}.beta_diversity.{}.matrix.tsv'.format(method, t)
+    infile = os.path.join(outdir, 'output.{}.beta_diversity.{}.matrix.tsv'.format(method, t))
     matrix_df = pd.read_csv(infile, sep='\t', index_col=0, header=0)
     nsample = matrix_df.shape[0]
     samples = matrix_df.index
@@ -106,14 +110,14 @@ for t in fullname_dict.keys():
     spair_list = ['{}:{}'.format(sample1_list[i], sample2_list[i]) for i in range(len(sample1_list))]
     matrix_df_new_t = pd.DataFrame({'sample_pair': spair_list, 'group': ppair_list, 'taxonomy_level': taxonomy_fullname, 'beta_diversity': values})
     matrix_df_new = pd.concat([matrix_df_new, matrix_df_new_t])
-matrix_df_new.to_csv('output.beta_diversity.results.tsv', sep='\t', index=False)
+matrix_df_new.to_csv(os.path.join(outdir, 'output.beta_diversity.results.tsv'), sep='\t', index=False)
 
 p_df_new = pd.DataFrame(columns=['taxonomy_level', 'group1', 'group2', 'g1_n', 'g2_n', 'g1_occ', 'g2_occ', 'g1_mean', 'g1_variance', 'g2_variance', 'g2_mean', 'g1/g2', 'enrich', 'pvalue'])
 nsample = phenos.shape[0]
 nsample = (nsample - 1) * nsample / 2
 for t in fullname_dict.keys():
     taxonomy_fullname = fullname_dict[t]
-    infile = 'output.{}.pvalue.{}.tsv'.format(method, t)
+    infile = os.path.join(outdir, 'output.{}.pvalue.{}.tsv'.format(method, t))
     p_df = pd.read_csv(infile, sep='\t', index_col=0, header=0)
     for ppair in p_df.index:
         g1 = ppair.split(':')[0].replace('-', ':')
@@ -132,6 +136,6 @@ for t in fullname_dict.keys():
         pvalue = p_df.loc[ppair, 'p-value']
         idx = p_df_new.shape[0]
         p_df_new.loc[idx, ] = [taxonomy_fullname, g1, g2, len(samples1), len(samples2), len(samples1)/nsample, len(samples2)/nsample, g1_mean, g1_variance, g2_variance, g2_mean, g1_g2, enrich, pvalue]
-p_df_new.to_csv('output.beta_diversity.pvalue.tsv', sep='\t', index=False)
+p_df_new.to_csv(os.path.join(outdir, 'output.beta_diversity.pvalue.tsv'), sep='\t', index=False)
             
 

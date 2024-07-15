@@ -41,8 +41,10 @@ def search_row(idx, df, db, fr_size):
     --db   <str> input file path of HGT cluster database
     --hgt    <str> input file of HGT output
     --fr_size    <int> flanking region size
+    --outdir    <str> output directory
 '''
-ops, args = getopt.getopt(sys.argv[1:], '', ['db=', 'hgt=', 'fr_size='])
+outdir = '.'
+ops, args = getopt.getopt(sys.argv[1:], '', ['db=', 'hgt=', 'fr_size=', 'outdir='])
 db_file = '/data2/platform/gutmeta_v2_platform/Database/HGT/DB.HGT_clusters.annotated.tsv'
 fr_size = 1000
 for op, arg in ops:
@@ -52,12 +54,12 @@ for op, arg in ops:
         infile = arg
     if op == '--fr_size':
         fr_size = int(arg)
+    if op == '--outdir':
+        outdir = arg
 
 
 #infile = '../../HGT_demo_file/SAMEA3449210.event_output.csv'
 #db_file = '../../HGT_demo_file/HGT/DB.HGT_clusters.annotated.tsv'
-outdir = '.'
-
 
 df = pd.read_csv(infile, header=0, index_col=None)
 db = pd.read_csv(db_file, header=0, index_col=0, sep='\t')

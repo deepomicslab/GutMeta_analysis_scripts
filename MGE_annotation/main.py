@@ -45,10 +45,12 @@ def search_row(idx, df, db_dir, fr_size):
     --db_dir   <str> input dir of MGE database
     --hgt    <str> input file of HGT output
     --fr_size    <int> flanking region size
+    --outdir    <str> output directory
 '''
-ops, args = getopt.getopt(sys.argv[1:], '', ['db_dir=', 'hgt=', 'fr_size='])
+ops, args = getopt.getopt(sys.argv[1:], '', ['db_dir=', 'hgt=', 'fr_size=', 'outdir='])
 db_file = '/data2/platform/gutmeta_v2_platform/Database/genome/DB.genome_annotation'
 fr_size = 1000
+outdir = '.'
 for op, arg in ops:
     if op == '--db_dir':
         db_idir = arg
@@ -56,11 +58,12 @@ for op, arg in ops:
         infile = arg
     if op == '--fr_size':
         fr_size = int(arg)
+    if op == '--outdir':
+        outdir = arg
 
 
 #infile = '../../HGT_demo_file/SAMEA3449210.event_output.csv'
 #db_file = '../../HGT_demo_file/HGT/DB.HGT_clusters.annotated.tsv'
-outdir = '.'
 
 
 df = pd.read_csv(infile, header=0, index_col=None)
