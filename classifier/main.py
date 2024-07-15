@@ -16,7 +16,7 @@ import os
     --occ_cutoff <str> threshold of occurence to filter taxonomy, the taxonomy should at least exist in the threshold ratio of samples of certain group, defualt: 0.1
     --mean_cutoff <str> threshold of mean value to filter taxonomy, at least one group should have a mean relative abundance greater than this threshold, defualt: 0
     --tax_level <str> taxonomy level to find biomarker, default: species. [species/genus]
-    --scale <boolean> scale abundance with log or not, defualt: True [True/False]
+    --scale <boolean> scale abundance with log or not, defualt: T [T:True/F:False]
     --cv_n <int> CV fold. default = 10 [2-10]
     --rep_n <int> replicates number for cross-validation. default = 5 [2-10]
     --outdir <str> output directory, default: current directory
@@ -53,6 +53,10 @@ for op, arg in ops:
         tax_level = arg
     if op == '--scale':
         scale = arg
+        if scale == 'T':
+            scale = 'True'
+        elif scale == 'F':
+            scale = 'False'
     if op == '--cv_n':
         cv_n = arg
     if op == '--rep_n':
