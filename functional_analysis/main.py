@@ -108,9 +108,10 @@ def get_backgroud(scaffold, db, range_excluded):
     --hgt    <str> input file of HGT output
     --fr_size    <int> flanking region size
     --ko_pathway_dict <str> input file of ko_pathway_dict
+    --outdir <str> output dir
 '''
 
-ops, args = getopt.getopt(sys.argv[1:], '', ['db_dir=', 'hgt=', 'fr_size=', 'ko_pathway_dict='])
+ops, args = getopt.getopt(sys.argv[1:], '', ['db_dir=', 'hgt=', 'fr_size=', 'ko_pathway_dict=', 'outdir='])
 db_file = '/data2/platform/gutmeta_v2_platform/Database/genome/DB.genome_annotation'
 ko_pathway_dict = '/data2/platform/gutmeta_v2_platform/Database/function_db/ko_pathway_dict.pickle'
 fr_size = 1000
@@ -124,6 +125,8 @@ for op, arg in ops:
         fr_size = int(arg)
     if op == '--ko_pathway_dict':
         pfile = arg
+    if op == '--outdir':
+        outdir = arg
 
 with open(pfile, 'rb') as f: 
     ko_pathway_dict = pickle.load(f)
