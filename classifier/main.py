@@ -19,6 +19,7 @@ import os
     --scale <boolean> scale abundance with log or not, defualt: True [True/False]
     --cv_n <int> CV fold. default = 10 [2-10]
     --rep_n <int> replicates number for cross-validation. default = 5 [2-10]
+    --outdir <str> output directory, default: current directory
 '''
 
 script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'diff.R')
@@ -26,8 +27,9 @@ script_path2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'random_
 
 ifile1 = ''
 ifile2 = ''
+outdir = '.'
 
-ops, args = getopt.getopt(sys.argv[1:], '', ['abdf=', 'dsf=', 'ann=', 'method=', 'groupid=',"adjust=","pvalue_cutoff=","occ_cutoff=","mean_cutoff=","tax_level=","scale=","cv_n=","rep_n="])
+ops, args = getopt.getopt(sys.argv[1:], '', ['abdf=', 'dsf=', 'ann=', 'method=', 'groupid=',"adjust=","pvalue_cutoff=","occ_cutoff=","mean_cutoff=","tax_level=","scale=","cv_n=","rep_n=", 'outdir='])
 for op, arg in ops:
     if op == '--abdf':
         ifile1 = arg
@@ -55,6 +57,8 @@ for op, arg in ops:
         cv_n = arg
     if op == '--rep_n':
         rep_n = arg
+    if op == '--outdir':
+        outdir = arg
 
 
 
@@ -62,10 +66,10 @@ merged_df = get_merged(ifile1,ifile2)
 group = metadata2gf(metadata,groupid)
 if not check_valid(group, merged_df):
     exit(2)
-group_file = 'merged_input.group_info.tsv'
+group_file = os.path.join(outdir, 'merged_input.group_info.tsv')
 group.to_csv(group_file, sep='\t', na_rep='NA')
 
-merged_df.to_csv('merged_input.abundance.all.tsv', sep='\t')
+merged_df.to_csv(os.path.join(outdir, 'merged_input.abundance.all.tsv'), sep='\t')
 split_tax = tax_split(merged_df)
 
 tax_dict = {'species': 's', 'genus': 'g'}
@@ -74,17 +78,17 @@ tax = tax_dict[tax_level]
 split_tax[tax].index.name = tax
 new_tax = [(tax_id.split('|')[-1]) for tax_id in list(split_tax[tax].index)]
 split_tax[tax].index = new_tax
-tax_abd = 'merged_input.abundance.' + tax +'.tsv'
+tax_abd = os.path.join(outdir, 'merged_input.abundance.' + tax +'.tsv')
 split_tax[tax].to_csv(tax_abd, sep='\t')
 
-output = 'output.diff_testing.'+ method + '.' + tax 
+output = os.path.join(outdir, 'output.diff_testing.'+ method + '.' + tax )
 result = subprocess.run(['Rscript',script_path,'-i',tax_abd,'-g',group_file,'-o',output,'-t',tax,'-m',method,'-a',adjust,'-p',pvalue_cutoff,'-e',mean_cutoff,'-c',occ_cutoff],stdout=subprocess.PIPE)
 if result.returncode > 0:
     print (result.stderr)
     exit(1)
 
-pass_abd = output + '.abd.pass.tsv'
-rf_output = 'output.random_forest.' + method + '.' + tax_level + '.pass.' + rep_n + '_' + cv_n
+pass_abd = os.path.join(outdir, output + '.abd.pass.tsv')
+rf_output = os.path.join(outdir, 'output.random_forest.' + method + '.' + tax_level + '.pass.' + rep_n + '_' + cv_n)
 result = subprocess.run(['Rscript',script_path2,'-i',pass_abd,'-g',group_file,'-o',rf_output,'-s',scale,'-r',rep_n,'-c',cv_n],stdout=subprocess.PIPE)
 
     

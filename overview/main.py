@@ -9,12 +9,15 @@ import os
     --dsf    <str> input file from subplatform
     --ann    <str> input file of group info
     --groupid  <str> column name used for grouping, default: phenotype
+    --tax_level <str> taxonomic level, default: genus
+    --outdir <str> output directory, default: current directory
 '''
 ifile1 = ''
 ifile2 = ''
+outdir = '.'
 
 tax_level = 'genus'
-ops, args = getopt.getopt(sys.argv[1:], '', ['abdf=', 'dsf=', 'ann=', 'method=', 'groupid=',"tax_level="])
+ops, args = getopt.getopt(sys.argv[1:], '', ['abdf=', 'dsf=', 'ann=', 'method=', 'groupid=',"tax_level=", 'outdir='])
 for op, arg in ops:
     if op == '--abdf':
         ifile1 = arg
@@ -26,6 +29,8 @@ for op, arg in ops:
         groupid = arg
     if op == '--tax_level':
         tax_level = arg
+    if op == '--outdir':
+        outdir = arg
 
 
 
@@ -38,7 +43,7 @@ if 'Group' in group.columns:
         print('Warning: Attribute Group have already exist in metadata, no longer use choose groupid {}.'.format(groupid))
 else:
     group = group.rename(columns={groupid:'Group'})
-group_file = 'merged_input.metadata.tsv'
+group_file = os.path.join(outdir, 'merged_input.metadata.tsv')
 group.to_csv(group_file, sep='\t', na_rep='NA')
 
 
@@ -55,5 +60,5 @@ df=split_tax[tax].T
 s = df.sum()
 tmp = df[s.sort_values(ascending=False).index[:20]].T
 tmp.loc['Other'] = 100 - tmp.sum()
-tax_abd = 'merged_input.abundance.top20.' + tax +'.tsv'
+tax_abd = os.path.join(outdir, 'merged_input.abundance.top20.' + tax +'.tsv')
 tmp.to_csv(tax_abd, sep='\t')
