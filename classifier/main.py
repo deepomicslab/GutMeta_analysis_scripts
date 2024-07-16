@@ -72,7 +72,10 @@ if not check_valid(group, merged_df):
     exit(2)
 group_file = os.path.join(outdir, 'merged_input.group_info.tsv')
 group.to_csv(group_file, sep='\t', na_rep='NA')
-
+rename_dict = {}
+for idx in merged_df.index:
+    rename_dict[idx] = idx.replace('-', '_')
+merged_df.rename(index=rename_dict, inplace=True)
 merged_df.to_csv(os.path.join(outdir, 'merged_input.abundance.all.tsv'), sep='\t')
 split_tax = tax_split(merged_df)
 
