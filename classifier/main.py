@@ -53,9 +53,9 @@ for op, arg in ops:
         tax_level = arg
     if op == '--scale':
         scale = arg
-        if scale == 'T':
+        if scale == 'T' or scale == 'True':
             scale = 'True'
-        elif scale == 'F':
+        elif scale == 'F'or scale == 'False':
             scale = 'False'
     if op == '--cv_n':
         cv_n = arg
@@ -85,20 +85,79 @@ tax = tax_dict[tax_level]
 split_tax[tax].index.name = tax
 new_tax = [(tax_id.split('|')[-1]) for tax_id in list(split_tax[tax].index)]
 split_tax[tax].index = new_tax
-tax_abd = os.path.join(outdir, 'merged_input.abundance.' + tax +'.tsv')
+tax_abd = os.path.join(outdir, 'merged_input.abundance.tsv')
 split_tax[tax].to_csv(tax_abd, sep='\t')
 
-output = os.path.join(outdir, 'output.diff_testing.'+ method + '.' + tax )
+output = os.path.join(outdir, 'output.diff_testing')
 result = subprocess.run(['Rscript',script_path,'-i',tax_abd,'-g',group_file,'-o',output,'-t',tax,'-m',method,'-a',adjust,'-p',pvalue_cutoff,'-e',mean_cutoff,'-c',occ_cutoff],stdout=subprocess.PIPE)
 if result.returncode > 0:
     print (result.stderr)
     exit(1)
 
 pass_abd = os.path.join(outdir, output + '.abd.pass.tsv')
-rf_output = os.path.join(outdir, 'output.random_forest.' + method + '.' + tax_level + '.pass.' + rep_n + '_' + cv_n)
+rf_output = os.path.join(outdir, 'temp.classifier')
 result = subprocess.run(['Rscript',script_path2,'-i',pass_abd,'-g',group_file,'-o',rf_output,'-s',scale,'-r',rep_n,'-c',cv_n],stdout=subprocess.PIPE)
 
     
 if result.returncode > 0:
     print (result.stderr)
     exit(1)
+
+group = pd.read_csv(group_file, sep='\t', index_col=0)
+phenos = list(set(group[groupid]))
+g1 = phenos[0]
+g2 = phenos[1]
+
+col_rename = {
+    'mean({})'.format(g1): 'g1_mean',
+    'mean({})'.format(g2): 'g2_mean',
+    'sd({})'.format(g1): 'g1_variance',
+    'sd({})'.format(g2): 'g2_variance',
+    'occ-rate({})'.format(g1): 'g1_occ',
+    'occ-rate({})'.format(g2): 'g2_occ',
+    'occ-n({})'.format(g1): 'g1_n',
+    'occ-n({})'.format(g2): 'g2_n',
+    'pvalue': 'p_value',
+    'qvalue': 'p_adj',
+}
+taxonomy_fullname = 'genus/species'
+fullname_dict = {}
+for t in taxonomy_fullname.split('/'):
+    fullname_dict[t[0]] = t
+
+p_df_new = pd.DataFrame(columns=(['taxonomy_level', 'group1', 'group2']+list(col_rename.values())+['g1/g2', 'enriched']))
+p_pass_df_new = pd.DataFrame(columns=(['taxonomy_level', 'group1', 'group2']+list(col_rename.values())+['g1/g2', 'enriched']))
+abd_df_pass_new = pd.DataFrame(columns=group.index)
+tax = tax_level
+output_p = os.path.join(outdir, 'output.diff_testing.stat.tsv')
+output_pass_a = os.path.join(outdir, 'output.diff_testing.abd.pass.tsv')
+abd_df_pass = pd.read_csv(output_pass_a, sep='\t', index_col=0)
+p_df = pd.read_csv(output_p, sep='\t', index_col=0)
+p_df.rename(columns=col_rename, inplace=True)
+p_df['taxonomy_level'] = tax_dict[tax]
+p_df['g1/g2'] = p_df['g1_mean']/p_df['g2_mean']
+p_df['g1_variance'] = p_df['g1_variance']**2
+p_df['g2_variance'] = p_df['g2_variance']**2
+p_df['group1'] = g1
+p_df['group2'] = g2
+for t in p_df.index:
+    p_df_new.loc[t, :] = p_df.loc[t, list(p_df_new.columns)]
+    if t in abd_df_pass.index:
+        p_pass_df_new.loc[t, :] = p_df_new.loc[t, :]
+        abd_df_pass_new.loc[t, ] = abd_df_pass.loc[t, abd_df_pass.columns]
+p_df_new.to_csv(os.path.join(outdir, 'output.diff_testing.'+ method + '.tsv'), sep='\t')
+p_pass_df_new.to_csv(os.path.join(outdir, 'output.diff_testing.'+ method + '.pass.tsv'), sep='\t')
+abd_df_pass_new.to_csv(os.path.join(outdir, 'output.diff_testing.'+ method + '.pass.abundance.tsv'), sep='\t')
+
+
+# rename 
+os.rename(os.path.join(outdir, 'temp.classifier.cross_validation.marker.predict.in.train.tsv'), os.path.join(outdir, 'output.classifier.prediction.tsv'))
+os.rename(os.path.join(outdir, 'temp.classifier.train.auc_info.txt'), os.path.join(outdir, 'temp.classifier.note.tsv'))
+
+importance_df = pd.read_csv(os.path.join(outdir, 'temp.classifier.feature.importance.tsv'), index_col=0, sep='\t')
+with open(os.path.join(outdir, 'temp.classifier.cross_validation_pick.txt')) as fp:
+    pick_list = fp.read().strip().split(',')
+for sp in pick_list:
+    importance_df.loc[sp, 'Selected'] = 'True'
+importance_df.fillna('False', inplace=True)
+importance_df.to_csv(os.path.join(outdir, 'output.classifier.feature_importance.tsv'), sep='\t')

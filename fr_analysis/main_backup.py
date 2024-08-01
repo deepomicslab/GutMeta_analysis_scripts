@@ -52,22 +52,9 @@ if not os.path.exists(odir):
     os.makedirs(odir)
 
 abd = pd.read_csv(abd_path, sep='\t', header=0, index_col=0)
-sname  = abd.columns[0]
-level = 's'
-take_sp_list = []
-rename_dict = {}
-for idx in abd.index:
-    last_l = idx.split('|')[-1]
-    if last_l[0] == level:
-        take_sp_list.append(idx)
-        rename_dict[idx] = last_l
-abd = abd.loc[take_sp_list, ]
-abd.rename(index=rename_dict, inplace=True)
-abd = abd.div(abd.sum(axis=0))
-
 d_df = pd.read_csv(d_path, sep='\t', index_col=0, header=0)
 nfr_df = pd.DataFrame(index=abd.columns, columns=['nFR'])
-
+sname  = abd.columns[0]
 nFR, fr_df, profile = nfr(d_df, abd, sname)
 nfr_df.loc[sname, 'nFR'] = nFR
 row_index, col_index = np.tril_indices(len(fr_df), k=0)
@@ -83,9 +70,9 @@ elif top_n > 0:
 else:
     top_n = 'all'
 
-with open(os.path.join(odir, 'output.FR.nFR.txt'), 'w') as f:
-    s = 'sample\tnFR\n'
-    s += '{}\t{}\n'.format(sname, nFR)
-    f.write(s)
-edge_df.columns = ['species1', 'species2', 'weight']
-edge_df.to_csv(os.path.join(odir, 'output.FR.top_edges.tsv'.format(sname, top_n)), sep='\t', index=False)
+with open(os.path.join(odir, '{}.nFR.txt'.format(sname)), 'w') as f:
+    f.write(str(nFR))
+edge_df.to_csv(os.path.join(odir, '{}.nFR.top[{}].edge.tsv'.format(sname, top_n)), sep='\t', header=False, index=False)
+
+
+    

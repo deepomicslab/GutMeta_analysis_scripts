@@ -78,8 +78,7 @@ for (i in 1:nrow(groupname))
         mean <- paste("mean(",groupname[i,1],")",sep="")
         sd <- paste("sd(",groupname[i,1],")",sep="")
         occ <- paste("occ-rate(",groupname[i,1],")",sep="")
-        occ_n <- paste("occ-n(",groupname[i,1],")",sep="")
-        title <- paste(title,mean,sd,occ,occ_n,sep="\t")
+        title <- paste(title,mean,sd,occ,sep="\t")
 }
 
 outmatrixname <- paste(title,"enriched","pvalue",sep="\t")
@@ -98,14 +97,13 @@ while(length(line <- readLines(abd_file, n=1))) {
 	dat <- dat[complete.cases(dat),]
 	mean.sd <- as.matrix(aggregate(dat$abund,by=list(dat$state),FUN=function(x)c(mean=sprintf("%0.9f",mean(x)),sd=sprintf("%0.9f",sd(x)))))
 	Occ <- as.matrix(aggregate(dat$abund,by=list(dat$state),FUN=function(x)sum(x != 0)/length(x)))
-  Occ_n <- as.matrix(aggregate(dat$abund,by=list(dat$state),FUN=function(x)sum(x != 0)))
 	if ( (mean.sd[1,2] < MEAN || as.numeric(Occ[1,2]) < OCC ) && (mean.sd[2,2] < MEAN || as.numeric(Occ[2,2]) < OCC) ){next}
 	test.pvalue <- testing_p(dat$abund, dat$state, method = METHOD)
 	Rank <- rank(dat$abund)
 	Rank_mean <- as.matrix(aggregate(Rank,by=list(dat$state),FUN=function(x)c(mean=mean(x))))
 	enriched <- as.character(Rank_mean[which.max(Rank_mean[,2]),1])
-	output <- paste(line[1],mean.sd[1,2],mean.sd[1,3],format(as.numeric(Occ[1,2]),digits=3), as.numeric(Occ_n[1,2]), mean.sd[2,2],mean.sd[2,3],format(as.numeric(Occ[2,2]),digits=3),as.numeric(Occ_n[2,2]),enriched,test.pvalue,sep="\t")
-  writeLines(output, con=outfile, sep="\n")
+	output <- paste(line[1],mean.sd[1,2],mean.sd[1,3],format(as.numeric(Occ[1,2]),digits=3),mean.sd[2,2],mean.sd[2,3],format(as.numeric(Occ[2,2]),digits=3),enriched,test.pvalue,sep="\t")
+	writeLines(output, con=outfile, sep="\n")
 
 }
 
@@ -118,7 +116,7 @@ data <- data %>% mutate_if(is.numeric, round, digits = 8)
 data <- data %>% arrange(.[[8]], desc(.[[2]]))
 write.table(format(data,scientific=FALSE),file=OUTPUT1,row.names=F, col.names=T, quote=F, sep="\t")
 
-#print(PVALUE, qvalue)
+
 pass <- data %>% filter (qvalue < PVALUE)
 write.table(pass, OUTPUT2, sep = "\t",quote = F, row.names = F)
 

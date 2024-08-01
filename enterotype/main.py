@@ -51,6 +51,11 @@ merged_df.to_csv(os.path.join(outdir, 'merged_input.abundance.all.tsv'), sep='\t
 split_tax = tax_split(merged_df)
 tax_list = [i for i in split_tax.keys()]
 
+taxonomy_fullname = 'kingdom/phylum/class/order/family/genus/species'
+fullname_dict = {}
+for t in taxonomy_fullname.split('/'):
+    fullname_dict[t[0]] = t
+
 
 for i in range(len(tax_list)):
     tax = tax_list[i]
@@ -64,9 +69,26 @@ for i in range(len(tax_list)):
     if len(split_tax[tax].index) < int(max_k):
         used_max_k = len(split_tax[tax].index) - 1 
     if i != 0 :
-        output = os.path.join(outdir, 'output.enterotype.' + tax)
+        output = os.path.join(outdir, 'output.enterotype.' + fullname_dict[tax])
         result = subprocess.run(['Rscript',script_path,'-i',tax_abd,'-o',output,'-t',tax,'-m',method,'-k',str(used_max_k)],stdout=subprocess.PIPE)
+        print(result.stdout)
         if result.returncode > 0:
             print (result.stderr)
             exit(1)
     
+
+for t in fullname_dict.values():
+    if t == 'kingdom':
+        continue
+    coord_df = pd.read_csv(os.path.join(outdir, 'output.enterotype.{}.{}.coordinates.tsv'.format(t, method)), sep='\t', index_col=0, header=0)
+    cluster_df = pd.read_csv(os.path.join(outdir, 'output.enterotype.' + t + '.cluster.tsv'), sep='\t', index_col=0, header=0)
+    os.rename(os.path.join(outdir, 'output.enterotype.{}.{}.coordinates.tsv'.format(t, method)), os.path.join(outdir, 'output.enterotype.{}.coordinates.tsv'.format(t)))
+    cluster_df['sample'] = cluster_df.index
+    cluster_df['group'] = group.loc[cluster_df.index, groupid]
+    cluster_df['enterotype'] = ['C{}'.format(x) for x in list(cluster_df['fac'])]
+    cluster_df[['sample', 'group', 'enterotype']].to_csv(os.path.join(outdir, 'output.enterotype.{}.cluster.tsv'.format(t)), sep='\t', index=False)
+    rename_dict  = {}
+    for c in coord_df.columns:
+        rename_dict[c] = c.replace('PC', 'Axis')
+    coord_df = coord_df.rename(columns=rename_dict)
+    coord_df.to_csv(os.path.join(outdir, 'output.enterotype.{}.coordinates.tsv'.format(t)), sep='\t', index=False)
