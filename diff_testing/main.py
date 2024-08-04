@@ -119,6 +119,6 @@ for tax, tax_fullname in fullname_dict.items():
         if t in abd_df_pass.index:
             p_pass_df_new.loc[t, :] = p_df_new.loc[t, :]
             abd_df_pass_new.loc[t, ] = abd_df_pass.loc[t, abd_df_pass.columns]
-p_df_new.to_csv(os.path.join(outdir, 'output.diff_testing.'+ method + '.tsv'), sep='\t')
-p_pass_df_new.to_csv(os.path.join(outdir, 'output.diff_testing.'+ method + '.pass.tsv'), sep='\t')
-abd_df_pass_new.to_csv(os.path.join(outdir, 'output.diff_testing.'+ method + '.pass.abundance.tsv'), sep='\t')
+p_df_new.to_csv(os.path.join(outdir, 'output.differential_testing.testing.tsv'), sep='\t')
+p_pass_df_new.to_csv(os.path.join(outdir, 'output.differential_testing.testing.pass.tsv'), sep='\t')
+abd_df_pass_new.to_csv(os.path.join(outdir, 'output.differential_testing.testing.pass.abundance.tsv'), sep='\t')
