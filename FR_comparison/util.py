@@ -7,7 +7,6 @@ import chardet
 import numpy as np
 from sys import exit
 from collections import defaultdict
-import csv, json
 
 
 
@@ -192,17 +191,3 @@ def filter_metadata_att(metadata,group_id='phenotype'):
     tmp = data[outputlist]
     return tmp
 
-
-
-
-def read_tsv(file_path):
-    result = []
-    with open(file_path, 'r', encoding='utf-8') as file:
-        reader = csv.reader(file, delimiter='\t')
-        for row in reader:
-            result.append(row)
-    return result
-
-def save_dict_as_json(data, file_path):
-    with open(file_path, 'w') as json_file:
-        json.dump(data, json_file, indent=2)

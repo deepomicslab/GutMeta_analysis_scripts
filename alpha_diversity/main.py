@@ -111,3 +111,15 @@ for taxa_level in pvalue.index:
         pvalue_reformat.loc[fullname_dict[taxa_level], 'enrich'] = g2
 
 pvalue_reformat.to_csv(os.path.join(outdir, 'output.alpha_diversity.pvalue.tsv'), sep='\t')
+
+results = read_tsv(os.path.join(outdir, 'output.alpha_diversity.results.tsv'))
+group_info = read_tsv(group_file)
+p_values = read_tsv(os.path.join(outdir, 'output.alpha_diversity.pvalue.tsv'))
+
+results_json = {'data': results[1:], 'columns': results[0]}
+group_info_json = {'data': group_info[1:], 'columns': group_info[0]}
+p_values_json = {'data': p_values[1:], 'columns': p_values[0]}
+
+save_dict_as_json(results_json, os.path.join(outdir, 'plot_results.json'))
+save_dict_as_json(group_info_json, os.path.join(outdir, 'plot_group_info.json'))
+save_dict_as_json(p_values_json, os.path.join(outdir, 'plot_p_values.json'))

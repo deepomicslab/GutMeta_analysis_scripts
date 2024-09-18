@@ -1,0 +1,135 @@
+import sys
+import getopt
+import os
+import numpy as np
+import pandas as pd
+from util import *
+from scipy.stats import ttest_ind, kruskal, f_oneway
+from scipy.stats import mannwhitneyu
+
+def nfr(d_df, profile, sname):
+    sp_list = list(set(list(profile.index)).intersection(set(list(d_df.index))))
+    n = len(sp_list)
+    corr = np.ones(shape=(n, n)) - d_df.loc[sp_list, sp_list].values
+    np.fill_diagonal(corr, 0)
+    a = np.array(profile.loc[sp_list, sname])
+    inter_matrix = np.dot(a.reshape(len(a), 1),a.reshape(1, len(a)))
+    np.fill_diagonal(inter_matrix, 0)
+    td = np.sum(inter_matrix)/2
+    fr = np.sum(np.multiply(inter_matrix, corr))/2
+    fr_df = pd.DataFrame(np.multiply(inter_matrix, corr), index=sp_list, columns=sp_list)
+    profile = profile.loc[sp_list, sname]
+    if td == 0:
+        return 0
+    return fr/td, fr_df, profile
+
+
+'''
+    This is alpha_diversity.
+    options:
+    --abdf   <str> input file path of related abundance
+    --gcn_d    <str> input GCN
+    --ann    <str> input file of group info
+    --groupid  <str> column name used for grouping, default: phenotype
+    --method <str> method for testing [wilcox.test/t.test/kruskal.test/aov]
+    --odir    <str> output directory
+'''
+
+python_file = os.path.abspath(__file__) 
+python_dir = os.path.dirname(python_file)
+
+odir = '.'
+ifile1 = ''
+ifile2 = ''
+ops, args = getopt.getopt(sys.argv[1:], '', ['abdf=', 'gcn_d=', 'ann=', 'odir=', 'groupid=', 'method='])
+for op, arg in ops:
+    if op == '--abdf':
+        ifile1 = arg
+    if op == '--gcn_d':
+        d_path = arg
+    if op == '--ann':
+        metadata = float(arg)
+    if op == '--odir':
+        outdir = arg
+    if op == '--groupid':
+        groupid = arg
+    if op == '--method':
+        method = arg
+
+
+
+if not os.path.exists(odir):
+    os.makedirs(odir)
+
+merged_df = get_merged(ifile1,ifile2)
+group = metadata2gf(metadata,groupid)
+if not check_valid(group, merged_df):
+    exit(2)
+group_file = os.path.join(outdir, 'merged_input.group_info.tsv')
+group.to_csv(group_file, sep='\t', na_rep='NA')
+split_tax = tax_split(merged_df)
+sp_df = split_tax['s']
+
+d_df = pd.read_csv(d_path, sep='\t', index_col=0, header=0)
+nfr_df = pd.DataFrame(index=sp_df.columns, columns=['nFR'])
+
+for sname in sp_df.columns:
+    nFR, fr_df, profile = nfr(d_df, sp_df, sname)
+    nfr_df.loc[sname, 'nFR'] = nFR
+
+group = pd.read_csv(group_file, sep='\t', index_col=0)
+phenos = list(set(group[groupid]))
+g1 = phenos[0]
+g2 = phenos[1]
+
+cols = [
+    'group1',
+    'group2'
+    'g1_mean',
+    'g2_mean',
+    'g1_variance',
+    'g2_variance',
+    'g1_occ',
+    'g2_occ',
+    'g1_n',
+    'g2_n',
+    'p_value',
+    'g1/g2', 
+    'enriched']
+
+
+
+p_df = pd.DataFrame(columns=cols)
+p_df['group1'] = g1
+p_df['group2'] = g2
+g1_v = nfr_df.loc[group[groupid] == g1, 'nFR']
+g2_v = nfr_df.loc[group[groupid] == g2, 'nFR']
+p_df['g1_mean'] = g1_v.mean()
+p_df['g2_mean'] = g2_v.mean()
+if p_df['g1_mean'] > p_df['g2_mean']:
+    p_df['enriched'] = g1
+else:
+    p_df['enriched'] = g2
+p_df['g1/g2'] = p_df['g1_mean']/p_df['g2_mean']
+p_df['g1_variance'] = p_df['g1_variance']**2
+p_df['g2_variance'] = p_df['g2_variance']**2
+p_df['g1_occ'] = len(g1_v[g1_v > 0])/len(g1_v)
+p_df['g2_occ'] = len(g1_v[g1_v > 0])/len(g1_v)
+p_df['g1_n'] = len(g1_v)
+p_df['g2_n'] = len(g2_v)
+
+
+if method == 't.test':
+    p_df['p_value'] = ttest_ind(g1_v, g2_v)[1]
+elif method == 'wilcox.test':
+    p_df['p_value'] = mannwhitneyu(g1_v, g2_v)[1]
+elif method == 'kruskal.test':
+    p_df['p_value'] = kruskal(g1_v, g2_v)[1]
+elif method == 'aov':
+    p_df['p_value'] = f_oneway(g1_v, g2_v)[1]
+else:
+    print('Error: method not supported.')
+    exit(1)
+
+p_df.to_csv(os.path.join(outdir, 'output.FR_comparison.testing.tsv'), sep='\t')
+
