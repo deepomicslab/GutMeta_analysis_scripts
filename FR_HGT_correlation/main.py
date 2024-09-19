@@ -145,7 +145,7 @@ for g, slist in pheno_samples.items():
     output_hgt_net.to_csv(output3, sep='\t', index=False)
 
 
-result_df = pd.DataFrame(columns=['group', 'nFR', 'adj_nFR'])
+result_df = pd.DataFrame(columns=['group', 'nFR-HGT', 'adj_nFR-HGT'])
 for g in pheno_set:
     result_df.loc[g, 'group'] = g
     result_df.loc[g, 'nFR-HGT'] = hgt_gcn.net_correlation(sum_fr_dict[g], sum_hgt_net_dict[g], method)
