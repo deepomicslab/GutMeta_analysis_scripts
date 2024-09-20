@@ -152,9 +152,6 @@ def hgt2sp_hgt(sp_df, result_anno):
         sp2 = sp_df.loc[recipient, 'species']
         if sp1 == sp2:
             continue
-        sp_pair = sorted([sp1, sp2])
-        sp1 = sp_pair[0]
-        sp2 = sp_pair[1]
         if sp1 not in hgt_dict[sample].keys():
             hgt_dict[sample][sp1] = {}
         if sp2 not in hgt_dict[sample][sp1].keys():
@@ -165,8 +162,9 @@ def hgt2sp_hgt(sp_df, result_anno):
         new_df = pd.DataFrame()
         for sp1 in hgt_dict[sample].keys():
             for sp2 in hgt_dict[sample][sp1].keys():
+                if sp1 == sp2:
+                    continue
                 new_df.loc[sp1, sp2] = hgt_dict[sample][sp1][sp2]
-                new_df.loc[sp2, sp1] = hgt_dict[sample][sp1][sp2]
         new_df.fillna(0, inplace=True)
         result_dict[sample] = copy.deepcopy(new_df)
     return result_dict
@@ -234,6 +232,19 @@ def output_fr_net(fr_df, top_n):
     row_index, col_index = np.tril_indices(len(fr_df), k=0)
     fr_df.values[row_index, col_index] = 0
     edge_df = fr_df.stack().reset_index()
+    edge_df = edge_df[edge_df[0] != 0]
+    edge_df.sort_values(by=0, ascending=False, inplace=True)
+    if top_n >= 1:
+        edge_df = edge_df.head(int(top_n))
+        top_n = '{:.0f}'.format(top_n)
+    elif top_n > 0:
+        edge_df = edge_df.head(int(top_n*len(edge_df)))
+    else:
+        top_n = 'all'
+    return edge_df, top_n
+
+def output_hgt_net(hgt_df, top_n):
+    edge_df = hgt_df.stack().reset_index()
     edge_df = edge_df[edge_df[0] != 0]
     edge_df.sort_values(by=0, ascending=False, inplace=True)
     if top_n >= 1:

@@ -8,6 +8,8 @@ import util
 import copy
 import getopt
 
+
+#python main.py --abdf ../../hgt_abd_metadata/ERP010700.merged.tsv --ann ../../hgt_abd_metadata/ERP010700.metadata.v2.tsv --gcn_d ../../sp_d.tsv --groupid phenotype --method wilcox.test --odir .
 '''
     This is nfr adjuested by HGT comparison.
     options:
@@ -81,7 +83,7 @@ abd_df = hgt_gcn.multi_sample_normalize(abd_df)
 genome_ko = hgt_gcn.ko_df(hgt_df, db_dir)
 sp_ko_df = hgt_gcn.hgt2sp_ko(sp_df, genome_ko)
 
-nfr_result_df = pd.DataFrame(columns=['sample', 'nFR', 'adj_nFR', 'group'])
+nfr_result_df = pd.DataFrame(columns=['sample', 'group', 'nFR', 'aFR'])
 avg_fr_dict = {}
 avg_adj_fr_dict = {}
 for g, slist in pheno_samples.items():
@@ -112,10 +114,10 @@ for g, slist in pheno_samples.items():
                 new_d = hgt_gcn.make_d(new_gcn_df.loc[common_sp,])
         
             nfr_value, fr_df, profile = hgt_gcn.nfr(new_d, abd_df, sname)
-            nfr_result_df.loc[sname, 'adj_nFR'] = nfr_value
+            nfr_result_df.loc[sname, 'aFR'] = nfr_value
             sum_adj_fr_net = hgt_gcn.net_sum(sum_adj_fr_net, fr_df)
         else:
-            nfr_result_df.loc[sname, 'adj_nFR'] = nfr_value
+            nfr_result_df.loc[sname, 'aFR'] = nfr_value
             sum_adj_fr_net = hgt_gcn.net_sum(sum_adj_fr_net, fr_df)
     avg_fr_net = sum_fr_net / len(slist)
     avg_adj_fr_net = sum_adj_fr_net / len(slist)
@@ -124,8 +126,12 @@ for g, slist in pheno_samples.items():
     avg_adj_fr_dict[g] = copy.deepcopy(avg_adj_fr_net)
     avg_fr_output = hgt_gcn.output_fr_net(avg_fr_net, top_n)[0]
     avg_adj_fr_output = hgt_gcn.output_fr_net(avg_adj_fr_net, top_n)[0]
-    output1 = os.path.join(odir, 'output.fr_adjust_diff.avg_nFR.{}.tsv'.format(g))
-    output2 = os.path.join(odir, 'output.fr_adjust_diff.avg_adj_nFR.{}.tsv'.format(g))
+    if g == g1:
+        group_str = 'group1'
+    else:
+        group_str = 'group2'
+    output1 = os.path.join(odir, 'output.aFR_comparison.nFR_average_network.{}.tsv'.format(group_str))
+    output2 = os.path.join(odir, 'output.aFR_comparison.aFR_average_network.{}.tsv'.format(group_str))
     avg_fr_output.columns = ['species1', 'species2', 'weight']
     avg_adj_fr_output.columns = ['species1', 'species2', 'weight']
     avg_fr_output.to_csv(output1, sep='\t', index=False)
@@ -167,25 +173,27 @@ p_df.loc['nFR', 'g2_n'] = len(g2_v)
 p_df.loc['nFR', 'p_value'] = hgt_gcn.test(method, g1_v, g2_v)
 
 
-p_df.loc['adj_nFR', 'group1'] = g1
-p_df.loc['adj_nFR', 'group2'] = g2
-g1_v = nfr_result_df[nfr_result_df['group'] == g1]['adj_nFR'].values.astype(float)
-g2_v = nfr_result_df[nfr_result_df['group'] == g2]['adj_nFR'].values.astype(float)
-p_df.loc['adj_nFR', 'g1_mean'] = g1_v.mean()
-p_df.loc['adj_nFR', 'g2_mean'] = g2_v.mean()
-if p_df.loc['adj_nFR', 'g1_mean'] > p_df.loc['adj_nFR', 'g2_mean']:
-    p_df.loc['adj_nFR', 'enriched'] = g1
+p_df.loc['aFR', 'group1'] = g1
+p_df.loc['aFR', 'group2'] = g2
+g1_v = nfr_result_df[nfr_result_df['group'] == g1]['aFR'].values.astype(float)
+g2_v = nfr_result_df[nfr_result_df['group'] == g2]['aFR'].values.astype(float)
+p_df.loc['aFR', 'g1_mean'] = g1_v.mean()
+p_df.loc['aFR', 'g2_mean'] = g2_v.mean()
+if p_df.loc['aFR', 'g1_mean'] > p_df.loc['aFR', 'g2_mean']:
+    p_df.loc['aFR', 'enriched'] = g1
 else:
-    p_df.loc['adj_nFR', 'enriched'] = g2
-p_df.loc['adj_nFR', 'g1/g2'] = p_df.loc['adj_nFR', 'g1_mean']/p_df.loc['adj_nFR', 'g2_mean']
-p_df.loc['adj_nFR', 'g1_variance'] = g1_v.var()
-p_df.loc['adj_nFR', 'g2_variance'] = g2_v.var()
+    p_df.loc['aFR', 'enriched'] = g2
+p_df.loc['aFR', 'g1/g2'] = p_df.loc['aFR', 'g1_mean']/p_df.loc['aFR', 'g2_mean']
+p_df.loc['aFR', 'g1_variance'] = g1_v.var()
+p_df.loc['aFR', 'g2_variance'] = g2_v.var()
 #p_df.loc[1, 'g1_occ'] = len(g1_v[g1_v > 0])/len(g1_v)
 #p_df.loc[1, 'g2_occ'] = len(g2_v[g2_v > 0])/len(g2_v)
-p_df.loc['adj_nFR', 'g1_n'] = len(g1_v)
-p_df.loc['adj_nFR', 'g2_n'] = len(g2_v)
-p_df.loc['adj_nFR', 'p_value'] = hgt_gcn.test(method, g1_v, g2_v)
-outpath3 = os.path.join(odir, 'output.fr_adjust_diff.p_value.tsv')
+p_df.loc['aFR', 'g1_n'] = len(g1_v)
+p_df.loc['aFR', 'g2_n'] = len(g2_v)
+p_df.loc['aFR', 'p_value'] = hgt_gcn.test(method, g1_v, g2_v)
+outpath3 = os.path.join(odir, 'output.aFR_comparison.pvalue.tsv')
+outpath4 = os.path.join(odir, 'output.aFR_comparison.results.tsv')
 p_df.to_csv(outpath3, sep='\t', index=True)
+nfr_result_df.to_csv(outpath4, sep='\t', index=False)
 
 

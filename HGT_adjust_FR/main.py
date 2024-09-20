@@ -6,6 +6,7 @@ import pandas as pd
 import hgt_gcn
 import getopt
 
+# python main.py --abdf ../../hgt_abd_metadata/ERP010700.merged.tsv --gcn_d ../../sp_d.tsv  --gcn ../../GCN_s.tsv --top_n 100 --db_dir ../../HGT_demo_file/DB.genome_annotation --hgt ../../hgt_abd_metadata/ERP010700.HGT.v2.csv --sp_g ../../hgt_abd_metadata/genome_species.tsv --odir .
 '''
     This is to compute new nfr adjusted by HGT.
     options:
@@ -58,7 +59,7 @@ genome_ko = hgt_gcn.ko_df(hgt_df, db_dir)
 sp_ko_df = hgt_gcn.hgt2sp_ko(sp_df, genome_ko)
 
 # multi sample adjust
-nfr_result_df = pd.DataFrame(columns=['sample', 'nFR', 'adj_nFR'])
+nfr_result_df = pd.DataFrame(columns=['sample', 'nFR', 'aFR'])
 sum_fr_net = pd.DataFrame()
 sum_adj_fr_net = pd.DataFrame()
 for sname in list(abd_df.columns):
@@ -84,10 +85,10 @@ for sname in list(abd_df.columns):
             new_d = hgt_gcn.make_d(new_gcn_df.loc[common_sp,])
     
         nfr_value, fr_df, profile = hgt_gcn.nfr(new_d, abd_df, sname)
-        nfr_result_df.loc[sname, 'adj_nFR'] = nfr_value
+        nfr_result_df.loc[sname, 'aFR'] = nfr_value
         sum_adj_fr_net = hgt_gcn.net_sum(sum_adj_fr_net, fr_df)
     else:
-        nfr_result_df.loc[sname, 'adj_nFR'] = nfr_value
+        nfr_result_df.loc[sname, 'aFR'] = nfr_value
         sum_adj_fr_net = hgt_gcn.net_sum(sum_adj_fr_net, fr_df)
 avg_fr_net = sum_fr_net / len(abd_df.columns)
 avg_adj_fr_net = sum_adj_fr_net / len(abd_df.columns)
@@ -96,9 +97,9 @@ avg_adj_fr_net = sum_adj_fr_net / len(abd_df.columns)
 avg_fr_output = hgt_gcn.output_fr_net(avg_fr_net, top_n)[0]
 avg_adj_fr_output = hgt_gcn.output_fr_net(avg_adj_fr_net, top_n)[0]
 
-output_path1 = os.path.join(odir, 'output.hgt_adjusted_fr.avg_nFR.tsv')
-output_path2 = os.path.join(odir, 'output.hgt_adjusted_fr.avg_adj_nFR.tsv')
-output_path3 = os.path.join(odir, 'output.hgt_adjusted_fr.nFR_adjusted.tsv')
+output_path1 = os.path.join(odir, 'output.aFR.nFR_average_network.tsv')
+output_path2 = os.path.join(odir, 'output.aFR.aFR_average_network.tsv ')
+output_path3 = os.path.join(odir, 'output.aFR.results.tsv')
 
 nfr_result_df.to_csv(output_path3, sep='\t', index=False)
 avg_fr_output.columns = ['species1', 'species2', 'weight']

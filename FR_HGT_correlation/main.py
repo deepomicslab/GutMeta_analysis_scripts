@@ -6,6 +6,7 @@ import util
 import copy
 import getopt
 
+# python main.py --abdf ../../hgt_abd_metadata/ERP010700.merged.tsv --ann ../../hgt_abd_metadata/ERP010700.metadata.v2.tsv --groupid phenotype --method pearson --gcn_d ../../sp_d.tsv  --gcn ../../GCN_s.tsv --db_dir ../../HGT_demo_file/DB.genome_annotation --hgt ../../hgt_abd_metadata/ERP010700.HGT.v2.csv --sp_g ../../hgt_abd_metadata/genome_species.tsv --odir .
 
 '''
     This is nfr adjuested by HGT comparison.
@@ -78,12 +79,14 @@ sp_ko_df = hgt_gcn.hgt2sp_ko(sp_df, genome_ko)
 hgt_nets = hgt_gcn.hgt2sp_hgt(sp_df, genome_ko)
 
 
-nfr_result_df = pd.DataFrame(columns=['sample', 'nFR', 'adj_nFR', 'group'])
+nfr_result_df = pd.DataFrame(columns=['sample', 'nFR', 'aFR', 'group'])
 sum_fr_dict = {}
 sum_adj_fr_dict = {}
 sum_hgt_net_dict ={}
+sym_hgt_net_dict = {}
 
-for g, slist in pheno_samples.items():
+for i, g in enumerate(pheno_set):
+    slist = pheno_samples[g]
     # multi sample test
     sum_fr_net = pd.DataFrame()
     sum_adj_fr_net = pd.DataFrame()
@@ -108,35 +111,39 @@ for g, slist in pheno_samples.items():
             new_gcn_df, effect_list = hgt_gcn.hgt_adjust_gcn(gcn_df, part_df)
             effect_list = list(set(effect_list).intersection(set(common_sp)))
             tmp_gcn = gcn_df.T[common_sp]
-            if len(effect_list) < 20:
+            if len(effect_list) < 1000:
                 new_d = hgt_gcn.adjust_d(tmp_d, tmp_gcn, effect_list)
             else:
                 new_d = hgt_gcn.make_d(new_gcn_df.loc[common_sp,])
         
             nfr_value, fr_df, profile = hgt_gcn.nfr(new_d, abd_df, sname)
-            nfr_result_df.loc[sname, 'adj_nFR'] = nfr_value
+            nfr_result_df.loc[sname, 'aFR'] = nfr_value
             sum_adj_fr_net = hgt_gcn.net_sum(sum_adj_fr_net, fr_df)
         else:
-            nfr_result_df.loc[sname, 'adj_nFR'] = nfr_value
+            nfr_result_df.loc[sname, 'aFR'] = nfr_value
             sum_adj_fr_net = hgt_gcn.net_sum(sum_adj_fr_net, fr_df)
     sum_fr_dict[g] = copy.deepcopy(sum_fr_net)
     sum_adj_fr_dict[g] = copy.deepcopy(sum_adj_fr_net)
     sum_hgt_net_dict[g] = copy.deepcopy(sum_hgt_net_df)
-    common_sp = list(set(sum_fr_net.index).intersection(set(sum_hgt_net_df.index)))
+    common_sp = list(set(sum_fr_net.index).intersection(set(sum_hgt_net_df.index).union(set(sum_hgt_net_df.columns))))
+    hgt_common_sp_index = list(set(sum_hgt_net_df.index).intersection(common_sp))
+    hgt_common_sp_columns = list(set(sum_hgt_net_df.columns).intersection(common_sp))
     if len(common_sp) == 0:
         print("No HGT found for current speceis")
-    sum_hgt_net_df = sum_hgt_net_df.loc[common_sp, common_sp]
-    mask = copy.deepcopy(sum_hgt_net_df)
+    sum_hgt_net_df = sum_hgt_net_df.loc[hgt_common_sp_index, hgt_common_sp_columns]
+    mask, tmp = copy.deepcopy(sum_hgt_net_df).align(pd.DataFrame(0, index=common_sp, columns=common_sp), fill_value=0)
+    mask = mask.loc[common_sp, common_sp]
+    sym_hgt_net_dict[g] = copy.deepcopy(mask+mask.T)
     mask[mask > 0] = 1
     sum_fr_net = sum_fr_net.loc[common_sp, common_sp].multiply(mask)
     sum_adj_fr_net = sum_adj_fr_net.loc[common_sp, common_sp].multiply(mask)
     
-    output1 = os.path.join(odir, 'output.fr_hgt_corr.sum_nFR.{}.tsv'.format(g))
-    output2 = os.path.join(odir, 'output.fr_hgt_corr.sum_adj_nFR.{}.tsv'.format(g))
-    output3 = os.path.join(odir, 'output.fr_hgt_corr.sum_hgt.{}.tsv'.format(g))
+    output1 = os.path.join(odir, 'output.HGT_FR_correlation.nFR_merge_network.group{}.tsv'.format(i+1))
+    output2 = os.path.join(odir, 'output.HGT_FR_correlation.aFR_merge_network.group{}.tsv'.format(i+1))
+    output3 = os.path.join(odir, 'output.HGT_FR_correlation.HGT_merge_network.group{}.tsv'.format(i+1))
     output_fr_net = hgt_gcn.output_fr_net(sum_fr_net, top_n)[0]
     output_adj_fr_net = hgt_gcn.output_fr_net(sum_adj_fr_net, top_n)[0]
-    output_hgt_net = hgt_gcn.output_fr_net(sum_hgt_net_df, top_n)[0]
+    output_hgt_net = hgt_gcn.output_hgt_net(sum_hgt_net_df, top_n)[0]
     output_fr_net.columns = ['species1', 'species2', 'weight']
     output_adj_fr_net.columns = ['species1', 'species2', 'weight']
     output_hgt_net.columns = ['species1', 'species2', 'weight']
@@ -145,11 +152,12 @@ for g, slist in pheno_samples.items():
     output_hgt_net.to_csv(output3, sep='\t', index=False)
 
 
-result_df = pd.DataFrame(columns=['group', 'nFR-HGT', 'adj_nFR-HGT'])
-for g in pheno_set:
-    result_df.loc[g, 'group'] = g
-    result_df.loc[g, 'nFR-HGT'] = hgt_gcn.net_correlation(sum_fr_dict[g], sum_hgt_net_dict[g], method)
-    result_df.loc[g, 'adj_nFR-HGT'] = hgt_gcn.net_correlation(sum_adj_fr_dict[g], sum_hgt_net_dict[g], method)
+result_df = pd.DataFrame(columns=['group', 'nFR-HGT', 'aFR-HGT'])
+for i, g in enumerate(pheno_set):
+    result_df.loc[g, 'group'] = "{}(group{})".format(g, i+1)
+    symm_hgt = sym_hgt_net_dict[g]
+    result_df.loc[g, 'nFR-HGT'] = hgt_gcn.net_correlation(sum_fr_dict[g], symm_hgt, method)
+    result_df.loc[g, 'aFR-HGT'] = hgt_gcn.net_correlation(sum_adj_fr_dict[g], symm_hgt, method)
 
-output4 = os.path.join(odir, 'output.fr_hgt_corr.correlation.tsv')
+output4 = os.path.join(odir, 'output.HGT_FR_correlation.correlation.tsv')
 result_df.to_csv(output4, sep='\t', index=False)
