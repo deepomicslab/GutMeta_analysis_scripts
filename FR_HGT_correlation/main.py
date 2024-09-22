@@ -143,6 +143,16 @@ for i, g in enumerate(pheno_set):
     output2 = os.path.join(odir, 'output.HGT_FR_correlation.aFR_merge_network.group{}.tsv'.format(i+1))
     output3 = os.path.join(odir, 'output.HGT_FR_correlation.HGT_merge_network.group{}.tsv'.format(i+1))
 
+    output_fr_net = hgt_gcn.output_fr_net(sum_fr_net, top_n)[0]
+    output_adj_fr_net = hgt_gcn.output_fr_net(sum_adj_fr_net, top_n)[0]
+    output_hgt_net = hgt_gcn.output_hgt_net(sum_hgt_net_df, top_n)[0]
+    output_fr_net.columns = ['species1', 'species2', 'weight']
+    output_adj_fr_net.columns = ['species1', 'species2', 'weight']
+    output_hgt_net.columns = ['species1', 'species2', 'weight']
+    output_fr_net.to_csv(output1, sep='\t', index=False)
+    output_adj_fr_net.to_csv(output2, sep='\t', index=False)
+    output_hgt_net.to_csv(output3, sep='\t', index=False)
+    
     output12 = os.path.join(odir, 'plot_nFR_merge_network.group{}.json'.format(i+1))
     output22 = os.path.join(odir, 'plot_aFR_merge_network.group{}.json'.format(i+1))
     output32 = os.path.join(odir, 'plot_HGT_merge_network.group{}.json'.format(i+1))
@@ -158,16 +168,6 @@ for i, g in enumerate(pheno_set):
     network_tsv3 = read_tsv(output3)
     network3 = {'plotType': 'HGT', 'data':  network_tsv3[1:], 'columns': network_tsv3[0]}
     save_dict_as_json(network3, output32)
-
-    output_fr_net = hgt_gcn.output_fr_net(sum_fr_net, top_n)[0]
-    output_adj_fr_net = hgt_gcn.output_fr_net(sum_adj_fr_net, top_n)[0]
-    output_hgt_net = hgt_gcn.output_hgt_net(sum_hgt_net_df, top_n)[0]
-    output_fr_net.columns = ['species1', 'species2', 'weight']
-    output_adj_fr_net.columns = ['species1', 'species2', 'weight']
-    output_hgt_net.columns = ['species1', 'species2', 'weight']
-    output_fr_net.to_csv(output1, sep='\t', index=False)
-    output_adj_fr_net.to_csv(output2, sep='\t', index=False)
-    output_hgt_net.to_csv(output3, sep='\t', index=False)
 
 
 result_df = pd.DataFrame(columns=['group', 'nFR-HGT', 'aFR-HGT'])

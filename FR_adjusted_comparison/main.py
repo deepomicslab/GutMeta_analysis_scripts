@@ -134,6 +134,12 @@ for g, slist in pheno_samples.items():
     output1 = os.path.join(odir, 'output.aFR_comparison.nFR_average_network.{}.tsv'.format(group_str))
     output2 = os.path.join(odir, 'output.aFR_comparison.aFR_average_network.{}.tsv'.format(group_str))
 
+
+    avg_fr_output.columns = ['species1', 'species2', 'weight']
+    avg_adj_fr_output.columns = ['species1', 'species2', 'weight']
+    avg_fr_output.to_csv(output1, sep='\t', index=False)
+    avg_adj_fr_output.to_csv(output2, sep='\t', index=False)
+
     output12 = os.path.join(odir, 'plot_FR_average_network.{}.json'.format(group_str))
     output22 = os.path.join(odir, 'plot_aFR_average_network.{}.json'.format(group_str))
 
@@ -145,10 +151,6 @@ for g, slist in pheno_samples.items():
     plot_output_aFR_nFR_average_network2 = {'plotType': 'FR', 'data':  plot_output_aFR_nFR_average_network_tsv2[1:], 'columns': plot_output_aFR_nFR_average_network_tsv2[0]}
     save_dict_as_json(plot_output_aFR_nFR_average_network2, output22)
 
-    avg_fr_output.columns = ['species1', 'species2', 'weight']
-    avg_adj_fr_output.columns = ['species1', 'species2', 'weight']
-    avg_fr_output.to_csv(output1, sep='\t', index=False)
-    avg_adj_fr_output.to_csv(output2, sep='\t', index=False)
 
 
 cols = [
