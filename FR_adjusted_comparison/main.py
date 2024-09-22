@@ -7,6 +7,7 @@ import hgt_gcn
 import util
 import copy
 import getopt
+from util import *
 
 
 #python main.py --abdf ../../hgt_abd_metadata/ERP010700.merged.tsv --ann ../../hgt_abd_metadata/ERP010700.metadata.v2.tsv --gcn_d ../../sp_d.tsv --groupid phenotype --method wilcox.test --odir .
@@ -132,6 +133,18 @@ for g, slist in pheno_samples.items():
         group_str = 'group2'
     output1 = os.path.join(odir, 'output.aFR_comparison.nFR_average_network.{}.tsv'.format(group_str))
     output2 = os.path.join(odir, 'output.aFR_comparison.aFR_average_network.{}.tsv'.format(group_str))
+
+    output12 = os.path.join(odir, 'plot_FR_average_network.{}.json'.format(group_str))
+    output22 = os.path.join(odir, 'plot_aFR_average_network.{}.json'.format(group_str))
+
+    plot_output_aFR_nFR_average_network_tsv1 = read_tsv(output1)
+    plot_output_aFR_nFR_average_network1 = {'plotType': 'FR', 'data':  plot_output_aFR_nFR_average_network_tsv1[1:], 'columns': plot_output_aFR_nFR_average_network_tsv1[0]}
+    save_dict_as_json(plot_output_aFR_nFR_average_network1, output12)
+
+    plot_output_aFR_nFR_average_network_tsv2 = read_tsv(output2)
+    plot_output_aFR_nFR_average_network2 = {'plotType': 'FR', 'data':  plot_output_aFR_nFR_average_network_tsv2[1:], 'columns': plot_output_aFR_nFR_average_network_tsv2[0]}
+    save_dict_as_json(plot_output_aFR_nFR_average_network2, output22)
+
     avg_fr_output.columns = ['species1', 'species2', 'weight']
     avg_adj_fr_output.columns = ['species1', 'species2', 'weight']
     avg_fr_output.to_csv(output1, sep='\t', index=False)
@@ -196,4 +209,18 @@ outpath4 = os.path.join(odir, 'output.aFR_comparison.results.tsv')
 p_df.to_csv(outpath3, sep='\t', index=True)
 nfr_result_df.to_csv(outpath4, sep='\t', index=False)
 
+
+# plot main data
+plot_FR_adjusted_comparison_data_tsv = read_tsv(outpath4)
+plot_FR_adjusted_comparison_info_tsv = read_tsv(outpath3)
+
+outpath32 = os.path.join(odir, 'plot_FR_adjusted_comparison_info.js')
+outpath42 = os.path.join(odir, 'plot_FR_adjusted_comparison_data.json')
+
+
+plot_FR_adjusted_comparison_data = {'data':  plot_FR_adjusted_comparison_data_tsv[1:], 'columns':  plot_FR_adjusted_comparison_data_tsv[0]}
+plot_FR_adjusted_comparison_info = {'data':  plot_FR_adjusted_comparison_info_tsv[1:], 'columns':  plot_FR_adjusted_comparison_info_tsv[0]}
+
+save_dict_as_json(plot_FR_adjusted_comparison_data, outpath42)
+save_dict_as_json(plot_FR_adjusted_comparison_info, outpath32)
 

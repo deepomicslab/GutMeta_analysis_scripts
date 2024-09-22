@@ -34,7 +34,7 @@ def merge_slist(idir, slist):
         sname = file.split('.')[0]
         if sname not in slist:
             continue
-        df = pd.read_csv(os.path.join(idir, file), sep='\t', header=None, index_col=0)
+        df = pd.read_csv(os.path.join(idir, file), sep='\t', header=0, index_col=0)
         df.dropna(how='all', axis=0)
         df.dropna(how='all', axis=1)
         df = df.loc[:, (df != 0).any(axis=0)]

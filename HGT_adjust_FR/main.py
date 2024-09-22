@@ -5,6 +5,7 @@ import sys
 import pandas as pd
 import hgt_gcn
 import getopt
+from util import *
 
 # python main.py --abdf ../../hgt_abd_metadata/ERP010700.merged.tsv --gcn_d ../../sp_d.tsv  --gcn ../../GCN_s.tsv --top_n 100 --db_dir ../../HGT_demo_file/DB.genome_annotation --hgt ../../hgt_abd_metadata/ERP010700.HGT.v2.csv --sp_g ../../hgt_abd_metadata/genome_species.tsv --odir .
 '''
@@ -106,3 +107,20 @@ avg_fr_output.columns = ['species1', 'species2', 'weight']
 avg_adj_fr_output.columns = ['species1', 'species2', 'weight']
 avg_fr_output.to_csv(output_path1, sep='\t', index=False)
 avg_adj_fr_output.to_csv(output_path2, sep='\t', index=False)
+
+
+# plot main data
+plot_FR_adjusted_comparison_data_tsv = read_tsv(output_path3)
+outpath32 = os.path.join(odir, 'plot_FR_adjusted_comparison_data.json')
+plot_FR_adjusted_comparison_data = {'data':  plot_FR_adjusted_comparison_data_tsv[1:], 'columns':  plot_FR_adjusted_comparison_data_tsv[0]}
+save_dict_as_json(plot_FR_adjusted_comparison_data, outpath32)
+
+output12 = os.path.join(odir, 'plot_FR_average_network.json')
+plot_output_aFR_nFR_average_network_tsv1 = read_tsv(output_path1)
+plot_output_aFR_nFR_average_network1 = {'plotType': 'FR', 'data':  plot_output_aFR_nFR_average_network_tsv1[1:], 'columns': plot_output_aFR_nFR_average_network_tsv1[0]}
+save_dict_as_json(plot_output_aFR_nFR_average_network1, output12)
+
+output22 = os.path.join(odir, 'plot_aFR_average_network.tsv')
+plot_output_aFR_nFR_average_network_tsv2 = read_tsv(output_path2)
+plot_output_aFR_nFR_average_network2 = {'plotType': 'FR', 'data':  plot_output_aFR_nFR_average_network_tsv2[1:], 'columns': plot_output_aFR_nFR_average_network_tsv2[0]}
+save_dict_as_json(plot_output_aFR_nFR_average_network2, output22)

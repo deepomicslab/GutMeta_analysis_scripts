@@ -5,6 +5,7 @@ import hgt_gcn
 import util
 import copy
 import getopt
+from util import *
 
 # python main.py --abdf ../../hgt_abd_metadata/ERP010700.merged.tsv --ann ../../hgt_abd_metadata/ERP010700.metadata.v2.tsv --groupid phenotype --method pearson --gcn_d ../../sp_d.tsv  --gcn ../../GCN_s.tsv --db_dir ../../HGT_demo_file/DB.genome_annotation --hgt ../../hgt_abd_metadata/ERP010700.HGT.v2.csv --sp_g ../../hgt_abd_metadata/genome_species.tsv --odir .
 
@@ -141,6 +142,23 @@ for i, g in enumerate(pheno_set):
     output1 = os.path.join(odir, 'output.HGT_FR_correlation.nFR_merge_network.group{}.tsv'.format(i+1))
     output2 = os.path.join(odir, 'output.HGT_FR_correlation.aFR_merge_network.group{}.tsv'.format(i+1))
     output3 = os.path.join(odir, 'output.HGT_FR_correlation.HGT_merge_network.group{}.tsv'.format(i+1))
+
+    output12 = os.path.join(odir, 'plot_nFR_merge_network.group{}.json'.format(i+1))
+    output22 = os.path.join(odir, 'plot_aFR_merge_network.group{}.json'.format(i+1))
+    output32 = os.path.join(odir, 'plot_HGT_merge_network.group{}.json'.format(i+1))
+
+    network_tsv1 = read_tsv(output1)
+    network1 = {'plotType': 'FR', 'data':  network_tsv1[1:], 'columns': network_tsv1[0]}
+    save_dict_as_json(network1, output12)
+
+    network_tsv2 = read_tsv(output2)
+    network2 = {'plotType': 'FR', 'data':  network_tsv2[1:], 'columns': network_tsv2[0]}
+    save_dict_as_json(network2, output22)
+
+    network_tsv3 = read_tsv(output3)
+    network3 = {'plotType': 'HGT', 'data':  network_tsv3[1:], 'columns': network_tsv3[0]}
+    save_dict_as_json(network3, output32)
+
     output_fr_net = hgt_gcn.output_fr_net(sum_fr_net, top_n)[0]
     output_adj_fr_net = hgt_gcn.output_fr_net(sum_adj_fr_net, top_n)[0]
     output_hgt_net = hgt_gcn.output_hgt_net(sum_hgt_net_df, top_n)[0]

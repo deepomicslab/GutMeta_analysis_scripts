@@ -6,7 +6,7 @@ import pandas as pd
 from util import *
 from scipy.stats import ttest_ind, kruskal, f_oneway
 from scipy.stats import mannwhitneyu
-
+from util import *
 
 # python main.py --abdf ../../hgt_abd_metadata/ERP010700.merged.tsv --ann ../../hgt_abd_metadata/ERP010700.metadata.v2.tsv --gcn_d ../../sp_d.tsv --groupid phenotype --method wilcox.test --odir .
 def nfr(d_df, profile, sname):
@@ -140,3 +140,17 @@ else:
 
 p_df.to_csv(os.path.join(odir, 'output.FR_comparison.pvalue.tsv'), sep='\t', index=True)
 nfr_df.to_csv(os.path.join(odir, 'output.FR_comparison.results.tsv'), sep='\t', index=False)
+
+# plot main data
+plot_FR_adjusted_comparison_data_tsv = read_tsv(os.path.join(odir, 'output.FR_comparison.results.tsv'))
+plot_FR_adjusted_comparison_info_tsv = read_tsv(os.path.join(odir, 'output.FR_comparison.pvalue.tsv'))
+
+outpath1 = os.path.join(odir, 'plot_FR_adjusted_comparison_info.js')
+outpath2 = os.path.join(odir, 'plot_FR_adjusted_comparison_data.json')
+
+
+plot_FR_adjusted_comparison_data = {'data':  plot_FR_adjusted_comparison_data_tsv[1:], 'columns':  plot_FR_adjusted_comparison_data_tsv[0]}
+plot_FR_adjusted_comparison_info = {'data':  plot_FR_adjusted_comparison_info_tsv[1:], 'columns':  plot_FR_adjusted_comparison_info_tsv[0]}
+
+save_dict_as_json(plot_FR_adjusted_comparison_data, outpath2)
+save_dict_as_json(plot_FR_adjusted_comparison_info, outpath1)
