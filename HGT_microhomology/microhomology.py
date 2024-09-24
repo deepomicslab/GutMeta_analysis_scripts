@@ -561,7 +561,8 @@ if __name__ == "__main__":
 
     optional.add_argument("-h", "--help", action="help")
     args = vars(parser.parse_args())
-
+    if not os.path.exists(args["outdir"]):
+        os.makedirs(args["outdir"])
     
     # database = "/mnt/d/breakpoints/HGT/micro_homo/UHGG_reference.formate.fna" # UHGG v1 reference
 

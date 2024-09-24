@@ -61,7 +61,8 @@ for op, arg in ops:
     if op == '--outdir':
         outdir = arg
 
-
+if not os.path.exists(outdir):
+    os.makedirs(outdir)
 #infile = '../../HGT_demo_file/SAMEA3449210.event_output.csv'
 #db_file = '../../HGT_demo_file/HGT/DB.HGT_clusters.annotated.tsv'
 

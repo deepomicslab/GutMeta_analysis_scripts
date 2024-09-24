@@ -128,6 +128,9 @@ for op, arg in ops:
     if op == '--outdir':
         outdir = arg
 
+if not os.path.exists(outdir):
+    os.makedirs(outdir)
+
 with open(pfile, 'rb') as f: 
     ko_pathway_dict = pickle.load(f)
 df = pd.read_csv(infile, header=0, index_col=None)
