@@ -3,6 +3,7 @@ import subprocess
 import getopt
 import os
 import pandas as pd
+import copy
 
 def overlap(range1, range2):
     if range1[0] > range2[1] or range1[1] < range2[0]:
@@ -95,7 +96,11 @@ for idx in df.index:
     reverse_flag = df.loc[idx, 'reverse_flag']
     result_anno.loc[len(result_anno), ] = [id, sample, recipient_MGE_n, recipient_MGE_category, recipient_MGE_list, donor_MGE_n, donor_MGE_category, donor_MGE_list, recipient, insert_locus, donor, delete_start, delete_end, reverse_flag]
     #result_anno.iloc[len(result_anno), ] = [id, sample, recipient_HGTC_n, recipient_HGTC_list, donor_HGTC_n, donor_HGTC_list, recipient, insert_locus, donor, delete_start, delete_end, reverse_flag]
+    merge_df = pd.concat([recipient_df, donor_df], ignore_index=True)
+    if MGE_result.empty:
+        MGE_result = copy.deepcopy(merge_df)
+    else:
+        MGE_result = pd.concat([MGE_result, merge_df], ignore_index=True)
 
-merge_df = pd.concat([recipient_df, donor_df], ignore_index=True)
-merge_df.to_csv(os.path.join(outdir, 'output.MGE_annotation.MGE.tsv'), index=False, sep='\t')
+MGE_result.to_csv(os.path.join(outdir, 'output.MGE_annotation.MGE.tsv'), index=False, sep='\t')
 result_anno.to_csv(os.path.join(outdir, 'output.MGE_annotation.annotated.tsv'), index=False, sep='\t')
