@@ -216,7 +216,7 @@ nfr_result_df.to_csv(outpath4, sep='\t', index=False)
 plot_FR_adjusted_comparison_data_tsv = read_tsv(outpath4)
 plot_FR_adjusted_comparison_info_tsv = read_tsv(outpath3)
 
-outpath32 = os.path.join(odir, 'plot_FR_adjusted_comparison_info.js')
+outpath32 = os.path.join(odir, 'plot_FR_adjusted_comparison_info.json')
 outpath42 = os.path.join(odir, 'plot_FR_adjusted_comparison_data.json')
 
 
