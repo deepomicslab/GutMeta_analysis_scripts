@@ -92,5 +92,6 @@ for idx in df.index:
     result_anno.loc[len(result_anno), ] = [id, sample, recipient_HGTC_n, recipient_HGTC_list, donor_HGTC_n, donor_HGTC_list, recipient, insert_locus, donor, delete_start, delete_end, reverse_flag]
     #result_anno.iloc[len(result_anno), ] = [id, sample, recipient_HGTC_n, recipient_HGTC_list, donor_HGTC_n, donor_HGTC_list, recipient, insert_locus, donor, delete_start, delete_end, reverse_flag]
 
-db.loc[all_HGTC_idx, ].to_csv(os.path.join(outdir, 'output.HGTC_annotation.HGTC.tsv'), index=True, sep='\t')
+db.loc[all_HGTC_idx, ].drop_duplicates().to_csv(os.path.join(outdir, 'output.HGTC_annotation.HGTC.tsv'), index=True, sep='\t')
+# db.loc[all_HGTC_idx, ].to_csv(os.path.join(outdir, 'output.HGTC_annotation.HGTC.tsv'), index=True, sep='\t')
 result_anno.to_csv(os.path.join(outdir, 'output.HGTC_annotation.annotated.tsv'), index=False, sep='\t')
