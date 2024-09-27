@@ -121,7 +121,9 @@ rfcv1 <- function (trainx, trainy, cv.fold = 5, scale = "log", step = 0.5,mtry =
 		}
 		if (classRF) 
 		{
-			error.cv <- sapply(cv.pred, function(x) mean(factor(ifelse(x>0.5,1,0))!=trainy))
+		  factor_pred <- lapply(cv.pred, function(x) factor(ifelse(x > 0.5, 1, 0), levels = levels(trainy)))
+		  #error.cv <- sapply(cv.pred, function(x) mean(factor(ifelse(x>0.5,1,0))!=trainy))
+		  error.cv <- sapply(factor_pred, function(x) mean(x != trainy))
 		}else {
 			error.cv <- sapply(cv.pred, function(x) mean((trainy - x)^2))
 		}
