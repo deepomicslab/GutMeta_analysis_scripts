@@ -162,8 +162,8 @@ for idx in df.index:
         MGE_result = pd.concat([MGE_result, merge_df], ignore_index=True)
 MGE_result.drop_duplicates(inplace=True)
 for idx in result_anno.index:
-    result_anno.loc[idx, 'recipient_MGE_category'] = ';'.join(result_anno.loc[idx, 'recipient_MGE_category'].split(';').unique())
-    result_anno.loc[idx, 'donor_MGE_category'] = ';'.join(result_anno.loc[idx, 'donor_MGE_category'].split(';').unique())
+    result_anno.loc[idx, 'recipient_MGE_category'] = ';'.join(list(set(result_anno.loc[idx, 'recipient_MGE_category'].split(';'))))
+    result_anno.loc[idx, 'donor_MGE_category'] = ';'.join(list(set(result_anno.loc[idx, 'donor_MGE_category'].split(';'))))
 MGE_result.to_csv(os.path.join(outdir, 'output.MGE_comparison.MGE.tsv'), index=False, sep='\t')
 result_anno.to_csv(os.path.join(outdir, 'output.MGE_comparison.annotated.tsv'), index=False, sep='\t')
 pvalue_df = enrichment(metadata, result_anno, groupid, type='MGE')
