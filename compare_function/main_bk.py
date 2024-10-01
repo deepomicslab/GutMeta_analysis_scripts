@@ -157,11 +157,13 @@ for s in list(hgt_slist):
 if not valid:
     exit(2)
 
-result_anno = pd.DataFrame(columns=['id', 'sample', 'phenotype', 'recipient_KEGG_n', 'recipient_KEGG_list', 'recipient_COG_n', 'recipient_COG_list',
+
+result_anno = pd.DataFrame(columns=['id', 'sample', 'group', 'recipient_KEGG_n', 'recipient_KEGG_list', 'recipient_COG_n', 'recipient_COG_list',
                                     'donor_KEGG_n', 'donor_KEGG_list', 'donor_COG_n', 'donor_COG_list',
                                     'recipient', 'insert_locus', 'donor', 'delete_start', 'delete_end', 'reverse_flag'])
-cog_relation = {}
-related_set_dict = {}
+
+# {phenoype: {ko:{k1：n}, cog:{c1: n}}}
+related_list_dict = {}
 for idx in df.index:
     recipient_df, donor_df = search_row(idx, df, db_idir, fr_size)
     id = 'HGT_c{}'.format(idx+1)
@@ -176,13 +178,20 @@ for idx in df.index:
         recipient_KEGG_list = 'NA'
     if recipient_COG_n == 0:
         recipient_COG_list = 'NA'
-    if phenotype not in related_set_dict.keys():
-        related_set_dict[phenotype] = {'ko':set(), 'cog':set(), 'cog_cate':[]}
-    related_set_dict[phenotype]['ko'] = related_set_dict[phenotype]['ko'].union(set(ko_list))
-    related_set_dict[phenotype]['cog'] = related_set_dict[phenotype]['cog'].union(set(cog_list))
-    related_set_dict[phenotype]['cog_cate'] += related_set_dict[phenotype]['cog_cate']
-    for i, cog in enumerate(cog_list):
-        cog_relation[cog] = cog_cate[i]
+    if phenotype not in related_list_dict.keys():
+        related_list_dict[phenotype] = {'ko':{}, 'cog':{}, 'cog_cate':{}}
+    for ko in ko_list:
+        if ko not in related_list_dict[phenotype]['ko'].keys():
+            related_list_dict[phenotype]['ko'][ko] = 0
+        related_list_dict[phenotype]['ko'][ko] += 1
+    for cog in cog_list:
+        if cog not in related_list_dict[phenotype]['cog'].keys():
+            related_list_dict[phenotype]['cog'][cog] = 0
+        related_list_dict[phenotype]['cog'][cog] += 1
+    for cog_c in cog_cate:
+        if cog_c not in related_list_dict[phenotype]['cog_cate'].keys():
+            related_list_dict[phenotype]['cog_cate'][cog_c] = 0
+        related_list_dict[phenotype]['cog_cate'][cog_c] += 1
     ko_list, cog_list, cog_cate = extract(donor_df)
     donor_KEGG_n = len(set(ko_list))
     donor_COG_n = len(set(cog_list))
@@ -192,11 +201,18 @@ for idx in df.index:
         donor_KEGG_list = 'NA'
     if donor_COG_n == 0:
         donor_COG_list = 'NA'
-    related_set_dict[phenotype]['ko'] = related_set_dict[phenotype]['ko'].union(set(ko_list))
-    related_set_dict[phenotype]['cog'] = related_set_dict[phenotype]['cog'].union(set(cog_list))
-    related_set_dict[phenotype]['cog_cate'] += related_set_dict[phenotype]['cog_cate']
-    for i, cog in enumerate(cog_list):
-        cog_relation[cog] = cog_cate[i]
+    for ko in ko_list:
+        if ko not in related_list_dict[phenotype]['ko'].keys():
+            related_list_dict[phenotype]['ko'][ko] = 0
+        related_list_dict[phenotype]['ko'][ko] += 1
+    for cog in cog_list:
+        if cog not in related_list_dict[phenotype]['cog'].keys():
+            related_list_dict[phenotype]['cog'][cog] = 0
+        related_list_dict[phenotype]['cog'][cog] += 1
+    for cog_c in cog_cate:
+        if cog_c not in related_list_dict[phenotype]['cog_cate'].keys():
+            related_list_dict[phenotype]['cog_cate'][cog_c] = 0
+        related_list_dict[phenotype]['cog_cate'][cog_c] += 1
     recipient = df.loc[idx, 'recipient']
     insert_locus = df.loc[idx, 'insert_locus']
     donor = df.loc[idx, 'donor']
@@ -204,12 +220,13 @@ for idx in df.index:
     delete_end = df.loc[idx, 'delete_end']
     reverse_flag = df.loc[idx, 'reverse_flag']
     result_anno.loc[len(result_anno), ] = [id, sample, phenotype, recipient_KEGG_n, recipient_KEGG_list, recipient_COG_n, recipient_COG_list, donor_KEGG_n, donor_KEGG_list, donor_COG_n, donor_COG_list, recipient, insert_locus, donor, delete_start, delete_end, reverse_flag]
-result_anno.to_csv(os.path.join(outdir, 'output.functional_annotation.annotated.tsv'), index=False, sep='\t')
+result_anno.to_csv(os.path.join(outdir, 'output.function_comparison.annotated.tsv'), index=False, sep='\t')
+
 
 # kegg to pathway count
-cate_df = pd.DataFrame(columns=related_set_dict.keys())
-for pheno in related_set_dict.keys():
-    for ko in related_set_dict[pheno]['ko']:
+cate_df = pd.DataFrame(columns=related_list_dict.keys())
+for pheno in related_list_dict.keys():
+    for ko, num in related_list_dict[pheno]['ko'].items():
         if ko in ko_pathway_dict.keys():
             pathways = ko_pathway_dict[ko]
             for pathway in pathways:
@@ -217,16 +234,15 @@ for pheno in related_set_dict.keys():
                     continue
                 if pathway not in cate_df.index:
                     cate_df.loc[pathway, pheno] = 0
-                    cate_df.fillna(0, inplace=True)
-                cate_df.loc[pathway, pheno] += 1
+                cate_df.loc[pathway, pheno] += num
 cate_df.fillna(0, inplace=True)
 
 pheno_set = list(set(metadata[groupid]))
 g1 = pheno_set[0]
 g2 = pheno_set[1]
 pvalue_reformat = pd.DataFrame(columns=['group1', 'group2', 'category', 'g1_in_category', 'g1_total', 'g2_in_category', 'g2_total', 'pvalue', 'odds_ratio'])
-g1_total = len(related_set_dict[g1]['ko'])
-g2_total = len(related_set_dict[g2]['ko'])
+g1_total = cate_df[g1].sum()
+g2_total = cate_df[g2].sum()
 valid_cate = []
 for cate in cate_df.index:
     a = cate_df.loc[cate, g1]
@@ -242,31 +258,26 @@ for cate in cate_df.index:
 padj = fdr(pvalue_reformat.loc[valid_cate, 'pvalue'].tolist(), 0.05)[1]
 for i, cate in enumerate(valid_cate):
     pvalue_reformat.loc[cate, 'padj'] = padj[i]
-    
 for idx in pvalue_reformat.index:
     pname, fc, sc = ke.get_pathway_name_class(idx)
     pvalue_reformat.loc[idx, 'pathway_name'] = pname
     pvalue_reformat.loc[idx, 'first_class'] = fc
     pvalue_reformat.loc[idx, 'second_class'] = sc
-pvalue_reformat.sort_values(by='category').to_csv(os.path.join(outdir, 'output.function_comparison.enrich.KEGG.tsv'), index=False, sep='\t')
+pvalue_reformat.sort_values(by='category').to_csv(os.path.join(outdir, 'output.function_comparison.pvalue.KEGG.tsv'), index=False, sep='\t')
 
 # cog to pathway count
-cate_df = pd.DataFrame(columns=related_set_dict.keys())
-for pheno in related_set_dict.keys():
-    for cog  in related_set_dict[pheno]['cog']:
-        cogc = cog_relation[cog]
-        if cogc not in cate_df.index:
-            cate_df.loc[cogc, pheno] = 0
-            cate_df.fillna(0, inplace=True)
-        cate_df.loc[cogc, pheno] += 1
+cate_df = pd.DataFrame(columns=related_list_dict.keys())
+for pheno in related_list_dict.keys():
+    for ko, num in related_list_dict[pheno]['cog_cate'].items():
+        cate_df.loc[ko, pheno] = num
 cate_df.fillna(0, inplace=True)
 
 pheno_set = list(set(metadata[groupid]))
 g1 = pheno_set[0]
 g2 = pheno_set[1]
 pvalue_reformat = pd.DataFrame(columns=['group1', 'group2', 'category', 'g1_in_category', 'g1_total', 'g2_in_category', 'g2_total', 'pvalue', 'odds_ratio'])
-g1_total = len(related_set_dict[g1]['cog'])
-g2_total = len(related_set_dict[g2]['cog'])
+g1_total = cate_df[g1].sum()
+g2_total = cate_df[g2].sum()
 valid_cate = []
 for cate in cate_df.index:
     a = cate_df.loc[cate, g1]
@@ -287,4 +298,4 @@ COG_dict, COG_profile_dict = ce.get_COG_dict()
 for idx in pvalue_reformat.index:
     pvalue_reformat.loc[idx, 'category'] = COG_dict[idx]
     pvalue_reformat.loc[idx, 'profile'] = COG_profile_dict[idx]
-pvalue_reformat.sort_values(by='category').to_csv(os.path.join(outdir, 'output.function_comparison.enrich.COG.tsv'), index=False, sep='\t')
+pvalue_reformat.sort_values(by='category').to_csv(os.path.join(outdir, 'output.function_comparison.pvalue.COG.tsv'), index=False, sep='\t')
