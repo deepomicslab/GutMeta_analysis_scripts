@@ -79,13 +79,13 @@ for idx in df.index:
     sample = df.loc[idx, 'sample']
     recipient_MGE_n = recipient_df.shape[0]
     recipient_MGE_category = ';'.join(recipient_df['Category'].unique())
-    recipient_MGE_list = ';'.join(recipient_df['Name'].unique())
+    recipient_MGE_list = ';'.join(recipient_df['Name'])
     if recipient_MGE_n == 0:
         recipient_MGE_list = 'NA'
         recipient_MGE_category = 'NA'
     donor_MGE_n = donor_df.shape[0]
     donor_MGE_category = ';'.join(donor_df['Category'].unique())
-    donor_MGE_list = ';'.join(donor_df['Name'].unique())
+    donor_MGE_list = ';'.join(donor_df['Name'])
     if donor_MGE_n == 0:
         donor_MGE_list = 'NA'
         donor_MGE_category = 'NA'

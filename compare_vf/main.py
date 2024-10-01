@@ -5,6 +5,8 @@ import os
 import pandas as pd
 import copy
 from scipy.stats import fisher_exact
+from statsmodels.stats.multitest import fdrcorrection as fdr
+
 
 def overlap(range1, range2):
     if range1[0] > range2[1] or range1[1] < range2[0]:
@@ -61,6 +63,7 @@ def enrichment(metadata, result_anno, groupid, outdir):
     pvalue_reformat = pd.DataFrame(columns=['group1', 'group2', 'category', 'g1_in_category', 'g1_total', 'g2_in_category', 'g2_total', 'pvalue', 'odds_ratio'])
     g1_total = cate_df[g1].sum()
     g2_total = cate_df[g2].sum()
+    valid_cate = []
     for cate in cate_df.index:
         a = cate_df.loc[cate, g1]
         b = cate_df.loc[cate, g2]
@@ -69,8 +72,12 @@ def enrichment(metadata, result_anno, groupid, outdir):
         if a+b == 0 or c+d == 0 or a+c == 0 or b+d == 0:
             pvalue_reformat.loc[cate, ] = [g1, g2, cate, a, g1_total, b, g2_total, 'NA', 'NA']
             continue
+        valid_cate.append(cate)
         oddsratio, pvalue = fisher_exact([[a, b], [c, d]])
         pvalue_reformat.loc[cate, ] = [g1, g2, cate, a, g1_total, b, g2_total, pvalue, oddsratio]
+    padj = fdr(pvalue_reformat.loc[valid_cate, 'pvalue'], 0.05)[1]
+    for i, cate in enumerate(valid_cate):
+        pvalue_reformat.loc[cate, 'p_adj'] = padj[i]
     return pvalue_reformat
 
 '''
@@ -128,6 +135,7 @@ for idx in df.index:
     recipient_df, donor_df = search_row(idx, df, db_idir, fr_size)
     id = 'HGT_c{}'.format(idx+1)
     sample = df.loc[idx, 'sample']
+    phenotype = metadata.loc[sample, groupid]
     recipient_MGE_n = recipient_df.shape[0]
     recipient_MGE_category = ';'.join(recipient_df['Category'])
     recipient_MGE_list = ';'.join(recipient_df['Name'])
@@ -135,8 +143,8 @@ for idx in df.index:
         recipient_MGE_list = 'NA'
         recipient_MGE_category = 'NA'
     donor_MGE_n = donor_df.shape[0]
-    donor_MGE_category = ';'.join(recipient_df['Category'])
-    donor_MGE_list = ';'.join(recipient_df['Name'])
+    donor_MGE_category = ';'.join(donor_df['Category'])
+    donor_MGE_list = ';'.join(donor_df['Name'])
     if donor_MGE_n == 0:
         donor_MGE_list = 'NA'
         donor_MGE_category = 'NA'
@@ -146,7 +154,7 @@ for idx in df.index:
     delete_start = df.loc[idx, 'delete_start']
     delete_end = df.loc[idx, 'delete_end']
     reverse_flag = df.loc[idx, 'reverse_flag']
-    result_anno.loc[len(result_anno), ] = [id, sample, recipient_MGE_n, recipient_MGE_category, recipient_MGE_list, donor_MGE_n, donor_MGE_category, donor_MGE_list, recipient, insert_locus, donor, delete_start, delete_end, reverse_flag]
+    result_anno.loc[len(result_anno), ] = [id, sample, phenotype, recipient_MGE_n, recipient_MGE_category, recipient_MGE_list, donor_MGE_n, donor_MGE_category, donor_MGE_list, recipient, insert_locus, donor, delete_start, delete_end, reverse_flag]
     #result_anno.iloc[len(result_anno), ] = [id, sample, recipient_HGTC_n, recipient_HGTC_list, donor_HGTC_n, donor_HGTC_list, recipient, insert_locus, donor, delete_start, delete_end, reverse_flag]
     merge_df = pd.concat([recipient_df, donor_df], ignore_index=True)
     if len(MGE_result)==0:
@@ -154,6 +162,9 @@ for idx in df.index:
     else:
         MGE_result = pd.concat([MGE_result, merge_df], ignore_index=True)
 MGE_result.drop_duplicates(inplace=True)
+for idx in result_anno.index:
+    result_anno.loc[idx, 'recipient_MGE_category'] = ';'.join(result_anno.loc[idx, 'recipient_VF_category'].split(';').unique())
+    result_anno.loc[idx, 'donor_MGE_category'] = ';'.join(result_anno.loc[idx, 'donor_VF_category'].split(';').unique())
 MGE_result.to_csv(os.path.join(outdir, 'output.VF_comparison.VF.tsv'), index=False, sep='\t')
 result_anno.to_csv(os.path.join(outdir, 'output.VF_comparison.annotated.tsv'), index=False, sep='\t')
 pvalue_df = enrichment(metadata, result_anno, groupid, outdir)

@@ -7,6 +7,9 @@ import gzip
 import COG_enrichment as ce
 import kegg_enrichment as ke
 import pickle
+from scipy.stats import fisher_exact
+from statsmodels.stats.multitest import fdrcorrection as fdr
+
 
 def gz2df(ifile):
     with gzip.open(ifile, 'rb') as f:
@@ -108,10 +111,12 @@ def get_backgroud(scaffold, db, range_excluded):
     --hgt    <str> input file of HGT output
     --fr_size    <int> flanking region size
     --ko_pathway_dict <str> input file of ko_pathway_dict
+    --ann   <str> metadata file
+    --groupid  <str> group id
     --outdir <str> output dir
 '''
 
-ops, args = getopt.getopt(sys.argv[1:], '', ['db_dir=', 'hgt=', 'fr_size=', 'ko_pathway_dict=', 'outdir='])
+ops, args = getopt.getopt(sys.argv[1:], '', ['db_dir=', 'hgt=', 'fr_size=', 'ko_pathway_dict=', 'outdir=', 'ann=', 'groupid='])
 db_file = '/data2/platform/gutmeta_v2_platform/Database/genome/DB.genome_annotation'
 ko_pathway_dict = '/data2/platform/gutmeta_v2_platform/Database/function_db/ko_pathway_dict.pickle'
 fr_size = 1000
@@ -127,6 +132,10 @@ for op, arg in ops:
         pfile = arg
     if op == '--outdir':
         outdir = arg
+    if op == '--ann':
+        infile2 = arg
+    if op == '--groupid':
+        groupid = arg
 
 if not os.path.exists(outdir):
     os.makedirs(outdir)
@@ -135,24 +144,33 @@ with open(pfile, 'rb') as f:
     ko_pathway_dict = pickle.load(f)
 df = pd.read_csv(infile, header=0, index_col=None)
 df.rename(columns={'receptor':'recipient'}, inplace=True)
+metadata = pd.read_csv(infile2, header=0, index_col=0, sep='\t')
+if len(metadata[groupid].unique()) != 2:
+    print('Error: the column {} does not have exact 2 level.'.format(groupid))
+    exit(1)
+hgt_slist = list(set(df['sample']))
+g_slist = list(metadata.index)
+valid = True
+for s in list(hgt_slist):
+    if s not in g_slist:
+        print('Error: group information of sample {} in HGT event dose NOT exist.'.format(s))
+        valid = False
+if not valid:
+    exit(2)
 
-result_anno = pd.DataFrame(columns=['id', 'sample', 'recipient_KEGG_n', 'recipient_KEGG_list', 'recipient_COG_n', 'recipient_COG_list',
+
+result_anno = pd.DataFrame(columns=['id', 'sample', 'phenotype', 'recipient_KEGG_n', 'recipient_KEGG_list', 'recipient_COG_n', 'recipient_COG_list',
                                     'donor_KEGG_n', 'donor_KEGG_list', 'donor_COG_n', 'donor_COG_list',
                                     'recipient', 'insert_locus', 'donor', 'delete_start', 'delete_end', 'reverse_flag'])
 
-bk_ko_set = set()
-bk_cog_set = set()
-exist_ko_set = set()
-exist_cog_set = set()
-
-
+# {phenoype: {ko:{k1：n}, cog:{c1: n}}}
+related_list_dict = {}
 for idx in df.index:
-    recipient_df, donor_df, recipient_excluded_df, donor_excluded_df = search_row(idx, df, db_idir, fr_size)
+    recipient_df, donor_df = search_row(idx, df, db_idir, fr_size)
     id = 'HGT_c{}'.format(idx+1)
     sample = df.loc[idx, 'sample']
+    phenotype = metadata.loc[sample, groupid]
     ko_list, cog_list, cog_cate = extract(recipient_df)
-    exist_ko_set.update(set(ko_list))
-    exist_cog_set.update(set(cog_cate))
     recipient_KEGG_n = len(set(ko_list))
     recipient_COG_n = len(set(cog_list))
     recipient_KEGG_list = ';'.join(set(ko_list))
@@ -161,10 +179,21 @@ for idx in df.index:
         recipient_KEGG_list = 'NA'
     if recipient_COG_n == 0:
         recipient_COG_list = 'NA'
-
+    if phenotype not in related_list_dict.keys():
+        related_list_dict[phenotype] = {'ko':{}, 'cog':{}, 'cog_cate':{}}
+    for ko in ko_list:
+        if ko not in related_list_dict[phenotype]['ko'].keys():
+            related_list_dict[phenotype]['ko'][ko] = 0
+        related_list_dict[phenotype]['ko'][ko] += 1
+    for cog in cog_list:
+        if cog not in related_list_dict[phenotype]['cog'].keys():
+            related_list_dict[phenotype]['cog'][cog] = 0
+        related_list_dict[phenotype]['cog'][cog] += 1
+    for cog_c in cog_cate:
+        if cog_c not in related_list_dict[phenotype]['cog_cate'].keys():
+            related_list_dict[phenotype]['cog_cate'][cog_c] = 0
+        related_list_dict[phenotype]['cog_cate'][cog_c] += 1
     ko_list, cog_list, cog_cate = extract(donor_df)
-    exist_ko_set.update(set(ko_list))
-    exist_cog_set.update(set(cog_cate))
     donor_KEGG_n = len(set(ko_list))
     donor_COG_n = len(set(cog_list))
     donor_KEGG_list = ';'.join(set(ko_list))
@@ -173,27 +202,101 @@ for idx in df.index:
         donor_KEGG_list = 'NA'
     if donor_COG_n == 0:
         donor_COG_list = 'NA'
+    for ko in ko_list:
+        if ko not in related_list_dict[phenotype]['ko'].keys():
+            related_list_dict[phenotype]['ko'][ko] = 0
+        related_list_dict[phenotype]['ko'][ko] += 1
+    for cog in cog_list:
+        if cog not in related_list_dict[phenotype]['cog'].keys():
+            related_list_dict[phenotype]['cog'][cog] = 0
+        related_list_dict[phenotype]['cog'][cog] += 1
+    for cog_c in cog_cate:
+        if cog_c not in related_list_dict[phenotype]['cog_cate'].keys():
+            related_list_dict[phenotype]['cog_cate'][cog_c] = 0
+        related_list_dict[phenotype]['cog_cate'][cog_c] += 1
     recipient = df.loc[idx, 'recipient']
     insert_locus = df.loc[idx, 'insert_locus']
     donor = df.loc[idx, 'donor']
     delete_start = df.loc[idx, 'delete_start']
     delete_end = df.loc[idx, 'delete_end']
     reverse_flag = df.loc[idx, 'reverse_flag']
-    result_anno.loc[len(result_anno), ] = [id, sample, recipient_KEGG_n, recipient_KEGG_list, recipient_COG_n, recipient_COG_list, donor_KEGG_n, donor_KEGG_list, donor_COG_n, donor_COG_list, recipient, insert_locus, donor, delete_start, delete_end, reverse_flag]
-
-    # add bg ko
-    ko_list, cog_list, cog_cate = extract(recipient_excluded_df)
-    bk_ko_set.update(set(ko_list))
-    bk_cog_set.update(set(cog_cate))
-
-    ko_list, cog_list, cog_cate = extract(donor_excluded_df)
-    bk_ko_set.update(set(ko_list))
-    bk_cog_set.update(set(cog_cate))
-    
+    result_anno.loc[len(result_anno), ] = [id, sample, phenotype, recipient_KEGG_n, recipient_KEGG_list, recipient_COG_n, recipient_COG_list, donor_KEGG_n, donor_KEGG_list, donor_COG_n, donor_COG_list, recipient, insert_locus, donor, delete_start, delete_end, reverse_flag]
 result_anno.to_csv(os.path.join(outdir, 'output.functional_annotation.annotated.tsv'), index=False, sep='\t')
-background_counts = ke.get_pathways(list(bk_ko_set), ko_pathway_dict)
-input_counts = ke.get_pathways(list(exist_ko_set), ko_pathway_dict)
-opath = os.path.join(outdir, 'output.functional_annotation.enrich.KEGG.tsv')
-ke.enrichment_analysis(list(exist_ko_set), list(bk_ko_set), input_counts, background_counts, opath)
-opath = os.path.join(outdir, 'output.functional_annotation.enrich.COG.tsv')
-ce.cog_enrich(opath, list(exist_cog_set), list(bk_cog_set) )
+
+
+# kegg to pathway count
+cate_df = pd.DataFrame(columns=related_list_dict.keys())
+for pheno in related_list_dict.keys():
+    for ko, num in related_list_dict[pheno]['ko'].items():
+        if ko in ko_pathway_dict.keys():
+            pathways = ko_pathway_dict[ko]
+            for pathway in pathways:
+                if not pathway.startswith('map'):
+                    continue
+                if pathway not in cate_df.index:
+                    cate_df.loc[pathway, pheno] = 0
+                cate_df.loc[pathway, pheno] += num
+cate_df.fillna(0, inplace=True)
+
+pheno_set = list(set(metadata[groupid]))
+g1 = pheno_set[0]
+g2 = pheno_set[1]
+pvalue_reformat = pd.DataFrame(columns=['group1', 'group2', 'category', 'g1_in_category', 'g1_total', 'g2_in_category', 'g2_total', 'pvalue', 'odds_ratio'])
+g1_total = cate_df[g1].sum()
+g2_total = cate_df[g2].sum()
+valid_cate = []
+for cate in cate_df.index:
+    a = cate_df.loc[cate, g1]
+    b = cate_df.loc[cate, g2]
+    c = g1_total - a
+    d = g2_total - b
+    if a+b==0 or c+d==0 or a+c==0 or b+d==0:
+        pvalue_reformat.loc[cate, ] = [g1, g2, cate, a, g1_total, b, g2_total, 'NA', 'NA']
+        continue
+    oddsratio, pvalue = fisher_exact([[a, b], [c, d]])
+    pvalue_reformat.loc[cate, ] = [g1, g2, cate, a, g1_total, b, g2_total, pvalue, oddsratio]
+    valid_cate.append(cate)
+padj = fdr(pvalue_reformat.loc[valid_cate, 'pvalue'].tolist(), 0.05)[1]
+for i, cate in enumerate(valid_cate):
+    pvalue_reformat.loc[cate, 'padj'] = padj[i]
+for idx in pvalue_reformat.index:
+    pname, fc, sc = ke.get_pathway_name_class(idx)
+    pvalue_reformat.loc[idx, 'pathway_name'] = pname
+    pvalue_reformat.loc[idx, 'first_class'] = fc
+    pvalue_reformat.loc[idx, 'second_class'] = sc
+pvalue_reformat.sort_values(by='category').to_csv(os.path.join(outdir, 'output.function_comparison.enrich.KEGG.tsv'), index=False, sep='\t')
+
+# cog to pathway count
+cate_df = pd.DataFrame(columns=related_list_dict.keys())
+for pheno in related_list_dict.keys():
+    for ko, num in related_list_dict[pheno]['cog_cate'].items():
+        cate_df.loc[ko, pheno] = num
+cate_df.fillna(0, inplace=True)
+
+pheno_set = list(set(metadata[groupid]))
+g1 = pheno_set[0]
+g2 = pheno_set[1]
+pvalue_reformat = pd.DataFrame(columns=['group1', 'group2', 'category', 'g1_in_category', 'g1_total', 'g2_in_category', 'g2_total', 'pvalue', 'odds_ratio'])
+g1_total = cate_df[g1].sum()
+g2_total = cate_df[g2].sum()
+valid_cate = []
+for cate in cate_df.index:
+    a = cate_df.loc[cate, g1]
+    b = cate_df.loc[cate, g2]
+    c = g1_total - a
+    d = g2_total - b
+    if a+b==0 or c+d==0 or a+c==0 or b+d==0:
+        pvalue_reformat.loc[cate, ] = [g1, g2, cate, a, g1_total, b, g2_total, 'NA', 'NA']
+        continue
+    oddsratio, pvalue = fisher_exact([[a, b], [c, d]])
+    pvalue_reformat.loc[cate, ] = [g1, g2, cate, a, g1_total, b, g2_total, pvalue, oddsratio]
+    valid_cate.append(cate)
+padj = fdr(pvalue_reformat.loc[valid_cate, 'pvalue'].tolist(), 0.05)[1]
+for i, cate in enumerate(valid_cate):
+    pvalue_reformat.loc[cate, 'padj'] = padj[i]
+
+COG_dict, COG_profile_dict = ce.get_COG_dict()
+for idx in pvalue_reformat.index:
+    pvalue_reformat.loc[idx, 'category'] = COG_dict[idx]
+    pvalue_reformat.loc[idx, 'profile'] = COG_profile_dict[idx]
+pvalue_reformat.sort_values(by='category').to_csv(os.path.join(outdir, 'output.function_comparison.enrich.COG.tsv'), index=False, sep='\t')
