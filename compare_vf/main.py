@@ -165,7 +165,7 @@ MGE_result.drop_duplicates(inplace=True)
 for idx in result_anno.index:
     result_anno.loc[idx, 'recipient_MGE_category'] = ';'.join(list(set(result_anno.loc[idx, 'recipient_VF_category'].split(';'))))
     result_anno.loc[idx, 'donor_MGE_category'] = ';'.join(list(set(result_anno.loc[idx, 'donor_VF_category'].split(';'))))
-MGE_result.to_csv(os.path.join(outdir, 'output.VF_comparison.VF.tsv'), index=False, sep='\t')
+#MGE_result.to_csv(os.path.join(outdir, 'output.VF_comparison.VF.tsv'), index=False, sep='\t')
 result_anno.to_csv(os.path.join(outdir, 'output.VF_comparison.annotated.tsv'), index=False, sep='\t')
 pvalue_df = enrichment(metadata, result_anno, groupid, outdir)
 pvalue_df.to_csv(os.path.join(outdir, 'output.VF_comparison.pvalue.tsv'), index=False, sep='\t')

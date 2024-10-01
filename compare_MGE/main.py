@@ -74,9 +74,9 @@ def enrichment(metadata, result_anno, groupid, type='MGE'):
         valid_cate.append(cate)
         oddsratio, pvalue = fisher_exact([[a, b], [c, d]])
         pvalue_reformat.loc[cate, ] = [g1, g2, cate, a, g1_total, b, g2_total, pvalue, oddsratio]
-    padj = fdr(pvalue_reformat.loc[valid_cate, 'pvalue'], 0.05)[1]
-    for i, cate in enumerate(valid_cate):
-        pvalue_reformat.loc[cate, 'p_adj'] = padj[i]
+    #padj = fdr(pvalue_reformat.loc[valid_cate, 'pvalue'], 0.05)[1]
+    #for i, cate in enumerate(valid_cate):
+    #    pvalue_reformat.loc[cate, 'p_adj'] = padj[i]
     return pvalue_reformat
 
 '''
@@ -164,7 +164,7 @@ MGE_result.drop_duplicates(inplace=True)
 for idx in result_anno.index:
     result_anno.loc[idx, 'recipient_MGE_category'] = ';'.join(list(set(result_anno.loc[idx, 'recipient_MGE_category'].split(';'))))
     result_anno.loc[idx, 'donor_MGE_category'] = ';'.join(list(set(result_anno.loc[idx, 'donor_MGE_category'].split(';'))))
-MGE_result.to_csv(os.path.join(outdir, 'output.MGE_comparison.MGE.tsv'), index=False, sep='\t')
+#MGE_result.to_csv(os.path.join(outdir, 'output.MGE_comparison.MGE.tsv'), index=False, sep='\t')
 result_anno.to_csv(os.path.join(outdir, 'output.MGE_comparison.annotated.tsv'), index=False, sep='\t')
 pvalue_df = enrichment(metadata, result_anno, groupid, type='MGE')
 pvalue_df.to_csv(os.path.join(outdir, 'output.MGE_comparison.pvalue.tsv'), index=False, sep='\t')
