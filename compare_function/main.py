@@ -84,7 +84,7 @@ def search_row(idx, df, db_dir, fr_size):
     db = gz2df(ifile)
     recipient_range = [max(0, row['insert_locus']-fr_size), row['insert_locus']+fr_size]
     recipient_df = search_event(recipient, db, recipient_range)
-    recipient_excluded_df = get_backgroud(recipient, db, recipient_range)
+    
     # for donor
     donor = row['donor']
     range = [max(0, row['delete_start'] - fr_size), row['delete_end'] + fr_size]
@@ -92,8 +92,7 @@ def search_row(idx, df, db_dir, fr_size):
     ifile = os.path.join(db_dir, tmp.format(chrom))
     db = gz2df(ifile)
     donor_df = search_event(donor, db, range)
-    donor_excluded_df = get_backgroud(donor, db, range)
-    return recipient_df, donor_df, recipient_excluded_df, donor_excluded_df 
+    return recipient_df, donor_df
 
 def get_backgroud(scaffold, db, range_excluded):
     scaffold_df = db[db[0] == scaffold]
@@ -107,7 +106,7 @@ def get_backgroud(scaffold, db, range_excluded):
 
 '''
     options:
-    --db_dir   <str> input dir of MGE database
+    --db_dir   <str> input dir of KEGG database
     --hgt    <str> input file of HGT output
     --fr_size    <int> flanking region size
     --ko_pathway_dict <str> input file of ko_pathway_dict
@@ -159,7 +158,7 @@ if not valid:
     exit(2)
 
 
-result_anno = pd.DataFrame(columns=['id', 'sample', 'phenotype', 'recipient_KEGG_n', 'recipient_KEGG_list', 'recipient_COG_n', 'recipient_COG_list',
+result_anno = pd.DataFrame(columns=['id', 'sample', 'group', 'recipient_KEGG_n', 'recipient_KEGG_list', 'recipient_COG_n', 'recipient_COG_list',
                                     'donor_KEGG_n', 'donor_KEGG_list', 'donor_COG_n', 'donor_COG_list',
                                     'recipient', 'insert_locus', 'donor', 'delete_start', 'delete_end', 'reverse_flag'])
 
@@ -221,7 +220,7 @@ for idx in df.index:
     delete_end = df.loc[idx, 'delete_end']
     reverse_flag = df.loc[idx, 'reverse_flag']
     result_anno.loc[len(result_anno), ] = [id, sample, phenotype, recipient_KEGG_n, recipient_KEGG_list, recipient_COG_n, recipient_COG_list, donor_KEGG_n, donor_KEGG_list, donor_COG_n, donor_COG_list, recipient, insert_locus, donor, delete_start, delete_end, reverse_flag]
-result_anno.to_csv(os.path.join(outdir, 'output.functional_annotation.annotated.tsv'), index=False, sep='\t')
+result_anno.to_csv(os.path.join(outdir, 'output.function_comparison.annotated.tsv'), index=False, sep='\t')
 
 
 # kegg to pathway count

@@ -130,7 +130,7 @@ if not valid:
     exit(2)
 
 MGE_result = pd.DataFrame()
-result_anno = pd.DataFrame(columns=['id', 'sample', 'recipient_VF_n', 'recipient_VF_category', 'recipient_VF_list', 'donor_VF_n', 'donor_VF_category', 'donor_VF_list', 'recipient', 'insert_locus', 'donor', 'delete_start', 'delete_end', 'reverse_flag'])
+result_anno = pd.DataFrame(columns=['id', 'sample', 'group', 'recipient_VF_n', 'recipient_VF_category', 'recipient_VF_list', 'donor_VF_n', 'donor_VF_category', 'donor_VF_list', 'recipient', 'insert_locus', 'donor', 'delete_start', 'delete_end', 'reverse_flag'])
 for idx in df.index:
     recipient_df, donor_df = search_row(idx, df, db_idir, fr_size)
     id = 'HGT_c{}'.format(idx+1)

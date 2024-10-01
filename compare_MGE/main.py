@@ -129,7 +129,7 @@ if not valid:
     exit(2)
 
 MGE_result = pd.DataFrame()
-result_anno = pd.DataFrame(columns=['id', 'sample', 'phenotype',  'recipient_MGE_n', 'recipient_MGE_category', 'recipient_MGE_list', 'donor_MGE_n', 'donor_MGE_category', 'donor_MGE_list', 'recipient', 'insert_locus', 'donor', 'delete_start', 'delete_end', 'reverse_flag'])
+result_anno = pd.DataFrame(columns=['id', 'sample', 'group',  'recipient_MGE_n', 'recipient_MGE_category', 'recipient_MGE_list', 'donor_MGE_n', 'donor_MGE_category', 'donor_MGE_list', 'recipient', 'insert_locus', 'donor', 'delete_start', 'delete_end', 'reverse_flag'])
 for idx in df.index:
     recipient_df, donor_df = search_row(idx, df, db_idir, fr_size)
     id = 'HGT_c{}'.format(idx+1)
@@ -142,8 +142,8 @@ for idx in df.index:
         recipient_MGE_list = 'NA'
         recipient_MGE_category = 'NA'
     donor_MGE_n = donor_df.shape[0]
-    donor_MGE_category = ';'.join(donor['Category'])
-    donor_MGE_list = ';'.join(donor['Name'])
+    donor_MGE_category = ';'.join(donor_df['Category'])
+    donor_MGE_list = ';'.join(donor_df['Name'])
     if donor_MGE_n == 0:
         donor_MGE_list = 'NA'
         donor_MGE_category = 'NA'
