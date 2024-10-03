@@ -248,7 +248,7 @@ for idx in pvalue_reformat.index:
     pvalue_reformat.loc[idx, 'pathway_name'] = pname
     pvalue_reformat.loc[idx, 'first_class'] = fc
     pvalue_reformat.loc[idx, 'second_class'] = sc
-pvalue_reformat.sort_values(by='category').to_csv(os.path.join(outdir, 'output.function_comparison.enrich.KEGG.tsv'), index=False, sep='\t')
+pvalue_reformat.sort_values(by='category').to_csv(os.path.join(outdir, 'output.function_comparison.pvalue.KEGG.tsv'), index=False, sep='\t')
 
 # cog to pathway count
 cate_df = pd.DataFrame(columns=related_set_dict.keys())
@@ -287,4 +287,4 @@ COG_dict, COG_profile_dict = ce.get_COG_dict()
 for idx in pvalue_reformat.index:
     pvalue_reformat.loc[idx, 'category'] = COG_dict[idx]
     pvalue_reformat.loc[idx, 'profile'] = COG_profile_dict[idx]
-pvalue_reformat.sort_values(by='category').to_csv(os.path.join(outdir, 'output.function_comparison.enrich.COG.tsv'), index=False, sep='\t')
+pvalue_reformat.sort_values(by='category').to_csv(os.path.join(outdir, 'output.function_comparison.pvalue.COG.tsv'), index=False, sep='\t')
