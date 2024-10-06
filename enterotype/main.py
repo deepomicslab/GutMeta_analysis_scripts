@@ -70,7 +70,7 @@ for i in range(len(tax_list)):
         used_max_k = len(split_tax[tax].index) - 1 
     if i != 0 :
         output = os.path.join(outdir, 'output.enterotype.' + fullname_dict[tax])
-        result = subprocess.run(['Rscript',script_path,'-i',tax_abd,'-o',output,'-t',tax,'-m',method,'-k',str(used_max_k)],stdout=subprocess.PIPE)
+        result = subprocess.run(['Rscript',script_path,'-i',tax_abd,'-o',output,'-t',fullname_dict[tax],'-m',method,'-k',str(used_max_k)],stdout=subprocess.PIPE)
         print(result.stdout)
         if result.returncode > 0:
             print (result.stderr)

@@ -100,7 +100,7 @@ colnames(dim_redu$li) <- paste("PC", 1:ncol(dim_redu$li), sep = "")
 result = data.frame(type = rownames(dim_redu$li))
 result = cbind(result, dim_redu$li)
 names(result)[names(result)=="type"]=TAX
-write.table(result, OUTPUT3, quote = F, sep = "\t", row.names = F)
+write.table(result, OUTPUT3, quote = F, sep = "\t", row.names = T)
 
 
 
