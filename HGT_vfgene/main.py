@@ -75,7 +75,7 @@ MGE_result = pd.DataFrame()
 result_anno = pd.DataFrame(columns=['id', 'sample', 'recipient_VF_n', 'recipient_VF_category', 'recipient_VF_list', 'donor_VF_n', 'donor_VF_category', 'donor_VF_list', 'recipient', 'insert_locus', 'donor', 'delete_start', 'delete_end', 'reverse_flag'])
 for idx in df.index:
     recipient_df, donor_df = search_row(idx, df, db_idir, fr_size)
-    id = 'HGT_c{}'.format(idx+1)
+    id = 'HGT_c{}'.format(len(result_anno)+1)
     sample = df.loc[idx, 'sample']
     recipient_MGE_n = recipient_df.shape[0]
     recipient_MGE_category = ';'.join(recipient_df['Category'].unique())
@@ -95,6 +95,8 @@ for idx in df.index:
     delete_start = df.loc[idx, 'delete_start']
     delete_end = df.loc[idx, 'delete_end']
     reverse_flag = df.loc[idx, 'reverse_flag']
+    if donor_MGE_n == 0 and recipient_MGE_n == 0:
+        continue
     result_anno.loc[len(result_anno), ] = [id, sample, recipient_MGE_n, recipient_MGE_category, recipient_MGE_list, donor_MGE_n, donor_MGE_category, donor_MGE_list, recipient, insert_locus, donor, delete_start, delete_end, reverse_flag]
     #result_anno.iloc[len(result_anno), ] = [id, sample, recipient_HGTC_n, recipient_HGTC_list, donor_HGTC_n, donor_HGTC_list, recipient, insert_locus, donor, delete_start, delete_end, reverse_flag]
     merge_df = pd.concat([recipient_df, donor_df], ignore_index=True)
