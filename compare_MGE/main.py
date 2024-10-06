@@ -167,4 +167,4 @@ for idx in result_anno.index:
 #MGE_result.to_csv(os.path.join(outdir, 'output.MGE_comparison.MGE.tsv'), index=False, sep='\t')
 result_anno.to_csv(os.path.join(outdir, 'output.MGE_comparison.annotated.tsv'), index=False, sep='\t')
 pvalue_df = enrichment(metadata, result_anno, groupid, type='MGE')
-pvalue_df.to_csv(os.path.join(outdir, 'output.MGE_comparison.pvalue.tsv'), index=False, sep='\t')
+pvalue_df.sort_values(by=['pvalue'], ascending=True).to_csv(os.path.join(outdir, 'output.MGE_comparison.pvalue.tsv'), index=False, sep='\t')

@@ -75,9 +75,9 @@ def enrichment(metadata, result_anno, groupid, outdir):
         valid_cate.append(cate)
         oddsratio, pvalue = fisher_exact([[a, b], [c, d]])
         pvalue_reformat.loc[cate, ] = [g1, g2, cate, a, g1_total, b, g2_total, pvalue, oddsratio]
-    padj = fdr(pvalue_reformat.loc[valid_cate, 'pvalue'], 0.05)[1]
-    for i, cate in enumerate(valid_cate):
-        pvalue_reformat.loc[cate, 'p_adj'] = padj[i]
+    #padj = fdr(pvalue_reformat.loc[valid_cate, 'pvalue'], 0.05)[1]
+    #for i, cate in enumerate(valid_cate):
+    #    pvalue_reformat.loc[cate, 'p_adj'] = padj[i]
     return pvalue_reformat
 
 '''
@@ -168,4 +168,4 @@ for idx in result_anno.index:
 #MGE_result.to_csv(os.path.join(outdir, 'output.VF_comparison.VF.tsv'), index=False, sep='\t')
 result_anno.to_csv(os.path.join(outdir, 'output.VF_comparison.annotated.tsv'), index=False, sep='\t')
 pvalue_df = enrichment(metadata, result_anno, groupid, outdir)
-pvalue_df.to_csv(os.path.join(outdir, 'output.VF_comparison.pvalue.tsv'), index=False, sep='\t')
+pvalue_df.sort_values(by=['pvalue'], ascending=True).to_csv(os.path.join(outdir, 'output.VF_comparison.pvalue.tsv'), index=False, sep='\t')
