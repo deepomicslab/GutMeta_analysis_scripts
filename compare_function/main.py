@@ -112,10 +112,11 @@ def get_backgroud(scaffold, db, range_excluded):
     --ko_pathway_dict <str> input file of ko_pathway_dict
     --ann   <str> metadata file
     --groupid  <str> group id
+    --table <str> input file of pathway table
     --outdir <str> output dir
 '''
 
-ops, args = getopt.getopt(sys.argv[1:], '', ['db_dir=', 'hgt=', 'fr_size=', 'ko_pathway_dict=', 'outdir=', 'ann=', 'groupid='])
+ops, args = getopt.getopt(sys.argv[1:], '', ['db_dir=', 'hgt=', 'fr_size=', 'ko_pathway_dict=', 'outdir=', 'ann=', 'groupid=', 'table='])
 db_file = '/data2/platform/gutmeta_v2_platform/Database/genome/DB.genome_annotation'
 ko_pathway_dict = '/data2/platform/gutmeta_v2_platform/Database/function_db/ko_pathway_dict.pickle'
 fr_size = 1000
@@ -133,12 +134,15 @@ for op, arg in ops:
         outdir = arg
     if op == '--ann':
         infile2 = arg
+    if op == '--table':
+        name_table = arg
     if op == '--groupid':
         groupid = arg
 
 if not os.path.exists(outdir):
     os.makedirs(outdir)
 
+pathway_table = pd.read_csv(name_table, sep='\t', header=0, index_col=0)
 with open(pfile, 'rb') as f: 
     ko_pathway_dict = pickle.load(f)
 df = pd.read_csv(infile, header=0, index_col=None)
@@ -244,7 +248,7 @@ for i, cate in enumerate(valid_cate):
     pvalue_reformat.loc[cate, 'padj'] = padj[i]
     
 for idx in pvalue_reformat.index:
-    pname, fc, sc = ke.get_pathway_name_class(idx)
+    pname, fc, sc = ke.get_pathway_name_class_static(idx, pathway_table)
     pvalue_reformat.loc[idx, 'pathway_name'] = pname
     pvalue_reformat.loc[idx, 'first_class'] = fc
     pvalue_reformat.loc[idx, 'second_class'] = sc

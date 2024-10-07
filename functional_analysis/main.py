@@ -108,10 +108,11 @@ def get_backgroud(scaffold, db, range_excluded):
     --hgt    <str> input file of HGT output
     --fr_size    <int> flanking region size
     --ko_pathway_dict <str> input file of ko_pathway_dict
+    --table <str> input file of pathway table
     --outdir <str> output dir
 '''
 
-ops, args = getopt.getopt(sys.argv[1:], '', ['db_dir=', 'hgt=', 'fr_size=', 'ko_pathway_dict=', 'outdir='])
+ops, args = getopt.getopt(sys.argv[1:], '', ['db_dir=', 'hgt=', 'fr_size=', 'ko_pathway_dict=', 'outdir=', 'table='])
 db_file = '/data2/platform/gutmeta_v2_platform/Database/genome/DB.genome_annotation'
 ko_pathway_dict = '/data2/platform/gutmeta_v2_platform/Database/function_db/ko_pathway_dict.pickle'
 fr_size = 1000
@@ -125,12 +126,15 @@ for op, arg in ops:
         fr_size = int(arg)
     if op == '--ko_pathway_dict':
         pfile = arg
+    if op == '--table':
+        name_table = arg
     if op == '--outdir':
         outdir = arg
 
 if not os.path.exists(outdir):
     os.makedirs(outdir)
 
+pathway_table = pd.read_csv(name_table, sep='\t', header=0, index_col=0)
 with open(pfile, 'rb') as f: 
     ko_pathway_dict = pickle.load(f)
 df = pd.read_csv(infile, header=0, index_col=None)
@@ -194,7 +198,7 @@ result_anno.to_csv(os.path.join(outdir, 'output.functional_annotation.annotated.
 background_counts = ke.get_pathways(list(bk_ko_set), ko_pathway_dict)
 input_counts = ke.get_pathways(list(exist_ko_set), ko_pathway_dict)
 opath = os.path.join(outdir, 'output.functional_annotation.enrich.KEGG.tsv')
-ke.enrichment_analysis(list(exist_ko_set), list(bk_ko_set), input_counts, background_counts, opath)
+ke.enrichment_analysis_static(list(exist_ko_set), list(bk_ko_set), input_counts, background_counts, opath, pathway_table)
 opath = os.path.join(outdir, 'output.functional_annotation.enrich.COG.tsv')
 ce.cog_enrich(opath, list(exist_cog_set), list(bk_cog_set))
 tmp = pd.read_csv(opath, sep='\t', header=0, index_col=None)
