@@ -110,17 +110,17 @@ avg_adj_fr_output.to_csv(output_path2, sep='\t', index=False)
 
 
 # plot main data
-plot_FR_adjusted_comparison_data_tsv = read_tsv(output_path3)
-outpath32 = os.path.join(odir, 'plot_FR_adjusted_comparison_data.json')
-plot_FR_adjusted_comparison_data = {'data':  plot_FR_adjusted_comparison_data_tsv[1:], 'columns':  plot_FR_adjusted_comparison_data_tsv[0]}
-save_dict_as_json(plot_FR_adjusted_comparison_data, outpath32)
+#plot_FR_adjusted_comparison_data_tsv = read_tsv(output_path3)
+#outpath32 = os.path.join(odir, 'plot_aFR_data.json')
+#plot_FR_adjusted_comparison_data = {'data':  plot_FR_adjusted_comparison_data_tsv[1:], 'columns':  plot_FR_adjusted_comparison_data_tsv[0]}
+#save_dict_as_json(plot_FR_adjusted_comparison_data, outpath32)
 
 output12 = os.path.join(odir, 'plot_FR_average_network.json')
 plot_output_aFR_nFR_average_network_tsv1 = read_tsv(output_path1)
 plot_output_aFR_nFR_average_network1 = {'plotType': 'FR', 'data':  plot_output_aFR_nFR_average_network_tsv1[1:], 'columns': plot_output_aFR_nFR_average_network_tsv1[0]}
 save_dict_as_json(plot_output_aFR_nFR_average_network1, output12)
 
-output22 = os.path.join(odir, 'plot_aFR_average_network.tsv')
+output22 = os.path.join(odir, 'plot_aFR_average_network.json')
 plot_output_aFR_nFR_average_network_tsv2 = read_tsv(output_path2)
 plot_output_aFR_nFR_average_network2 = {'plotType': 'FR', 'data':  plot_output_aFR_nFR_average_network_tsv2[1:], 'columns': plot_output_aFR_nFR_average_network_tsv2[0]}
 save_dict_as_json(plot_output_aFR_nFR_average_network2, output22)
