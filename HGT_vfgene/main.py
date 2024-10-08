@@ -70,7 +70,7 @@ if not os.path.exists(outdir):
 
 df = pd.read_csv(infile, header=0, index_col=None)
 df.rename(columns={'receptor':'recipient'}, inplace=True)
-MGE_result = pd.DataFrame()
+MGE_result = pd.DataFrame(columns=df.columns)
 
 result_anno = pd.DataFrame(columns=['id', 'sample', 'recipient_VF_n', 'recipient_VF_category', 'recipient_VF_list', 'donor_VF_n', 'donor_VF_category', 'donor_VF_list', 'recipient', 'insert_locus', 'donor', 'delete_start', 'delete_end', 'reverse_flag'])
 for idx in df.index:
