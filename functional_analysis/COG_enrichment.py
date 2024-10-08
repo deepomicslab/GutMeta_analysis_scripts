@@ -54,6 +54,8 @@ def enrichment_analysis(my_list, background_list, locus_type, data):
         d = len(background_list) - c
 
         oddsratio, p_value = fisher_exact([[a, b], [c, d]])
+        if a+b==0 or c+d==0 or a+c==0 or b+d==0:
+            oddsratio = 'NA'
     #    print (category, p_value, oddsratio, a, b, c, d) 
         data.append([category, COG_dict[category], p_value, oddsratio, a, COG_profile_dict[category], locus_type])
     return data

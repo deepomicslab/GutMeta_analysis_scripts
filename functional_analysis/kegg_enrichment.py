@@ -75,7 +75,8 @@ def enrichment_analysis(input_ko_ids, background_ko_ids, input_counts, backgroun
         #     print(f'{pathway_name} ({first_class}): enriched, p={p_value:.3f}, input={a}/{len(input_ko_ids)}, background={c}/{len(background_ko_ids)}, fold_enrichment={oddsratio:.3f}')
         # else:
         #     print(f'{pathway_name} ({first_class}): depleted, p={p_value:.3f}, input={a}/{len(input_ko_ids)}, background={c}/{len(background_ko_ids)}, fold_enrichment={oddsratio:.3f}')
-
+        if a+b==0 or c+d==0 or a+c==0 or b+d==0:
+            oddsratio = 'NA'
         data.append([pathway_name, pathway_id, p_value, a, oddsratio, first_class, second_class, a/(a+b), c/(c+d)])
 
     df = pd.DataFrame(data, columns = ["pathway_name", "pathway_id", "p_value", "gene_num", "fold", "first_class", "second_class", "fir_freq", "sec_freq"])
