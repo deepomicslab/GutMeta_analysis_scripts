@@ -241,7 +241,10 @@ for cate in cate_df.index:
         pvalue_reformat.loc[cate, ] = [g1, g2, cate, a, g1_total, b, g2_total, 'NA', 'NA']
         continue
     oddsratio, pvalue = fisher_exact([[a, b], [c, d]])
+    if b*c == 0:
+        oddsratio = 'NA'
     pvalue_reformat.loc[cate, ] = [g1, g2, cate, a, g1_total, b, g2_total, pvalue, oddsratio]
+    
     valid_cate.append(cate)
 padj = fdr(pvalue_reformat.loc[valid_cate, 'pvalue'].tolist(), 0.05)[1]
 for i, cate in enumerate(valid_cate):

@@ -74,6 +74,8 @@ def enrichment(metadata, result_anno, groupid, outdir):
             continue
         valid_cate.append(cate)
         oddsratio, pvalue = fisher_exact([[a, b], [c, d]])
+        if b*c == 0:
+            oddsratio = 'NA'
         pvalue_reformat.loc[cate, ] = [g1, g2, cate, a, g1_total, b, g2_total, pvalue, oddsratio]
     #padj = fdr(pvalue_reformat.loc[valid_cate, 'pvalue'], 0.05)[1]
     #for i, cate in enumerate(valid_cate):
